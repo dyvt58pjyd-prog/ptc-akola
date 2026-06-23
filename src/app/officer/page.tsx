@@ -107,7 +107,7 @@ export default async function OfficerDashboard() {
       {/* Advanced Metrics Cards */}
       <div className="grid-2" style={{ gridTemplateColumns: "repeat(auto-fit, minmax(200px, 1fr))", marginBottom: "2rem" }}>
         <div className="glass-card" style={{ display: "flex", alignItems: "center", gap: "1rem", padding: "1.5rem" }}>
-          <div style={{ padding: "1rem", backgroundColor: "rgba(255, 255, 255, 0.05)", borderRadius: "var(--radius-full)", color: "white" }}>
+          <div className="icon-bg-neutral" style={{ padding: "1rem", borderRadius: "var(--radius-full)" }}>
             <Users size={24} />
           </div>
           <div>

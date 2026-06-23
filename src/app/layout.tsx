@@ -3,6 +3,7 @@ import Link from "next/link";
 import "./globals.css";
 import Sidebar from "@/components/Sidebar";
 import SplashScreen from "@/components/SplashScreen";
+import { ThemeProvider } from "@/components/ThemeProvider";
 import { getSession } from "@/lib/auth";
 
 export const metadata: Metadata = {
@@ -20,16 +21,18 @@ export default async function RootLayout({
   return (
     <html lang="en">
       <body>
-        <SplashScreen />
-        <div className="app-container">
-          {/* Sidebar Navigation */}
-          <Sidebar role={session?.role || null} />
+        <ThemeProvider>
+          <SplashScreen />
+          <div className="app-container">
+            {/* Sidebar Navigation */}
+            <Sidebar role={session?.role || null} />
 
-          {/* Main Content Area */}
-          <main className={session ? "main-content" : "main-content-full"}>
-            {children}
-          </main>
-        </div>
+            {/* Main Content Area */}
+            <main className={session?.role ? "main-content" : "main-content-full"}>
+              {children}
+            </main>
+          </div>
+        </ThemeProvider>
       </body>
     </html>
   );

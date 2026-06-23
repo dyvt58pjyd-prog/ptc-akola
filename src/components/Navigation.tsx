@@ -134,7 +134,7 @@ export default function Navigation({ role }: { role: string | null }) {
         <button 
           onClick={handleLogout} 
           className="btn btn-outline" 
-          style={{ width: "100%", padding: "0.75rem 1rem", fontSize: "0.875rem", backgroundColor: "rgba(255,255,255,0.05)", color: "white", borderColor: "rgba(255,255,255,0.2)", display: "flex", justifyContent: "center" }}
+          style={{ width: "100%", padding: "0.75rem 1rem", fontSize: "0.875rem", display: "flex", justifyContent: "center" }}
           disabled={isPending}
         >
           <LogOut size={18} /> {isPending ? "Logging out..." : "Logout / लॉगआउट"}

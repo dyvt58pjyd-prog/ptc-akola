@@ -3,6 +3,7 @@
 import { useState } from "react";
 import Link from "next/link";
 import Navigation from "./Navigation";
+import ThemeToggle from "./ThemeToggle";
 import { Menu, X } from "lucide-react";
 
 export default function Sidebar({ role }: { role: string | null }) {
@@ -40,6 +41,9 @@ export default function Sidebar({ role }: { role: string | null }) {
           />
           <span>PTC Akola</span>
         </Link>
+        <div style={{ padding: "0 1rem", marginBottom: "1rem", marginTop: "-1rem" }}>
+          <ThemeToggle />
+        </div>
         <div onClick={() => setIsOpen(false)} style={{ display: "flex", flexDirection: "column", flex: 1, minHeight: 0 }}>
           <Navigation role={role} />
         </div>
