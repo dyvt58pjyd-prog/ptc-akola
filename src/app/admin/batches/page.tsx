@@ -33,7 +33,10 @@ export default async function BatchesAdminPage() {
           <h3 className="heading-2" style={{ marginBottom: "1.5rem", display: "flex", alignItems: "center", gap: "0.5rem" }}>
             <Calendar size={20} color="var(--accent-gold)" /> Create New Batch
           </h3>
-          <form action={createBatch}>
+          <form action={async (formData) => {
+            "use server";
+            await createBatch(formData);
+          }}>
             <div className="form-group">
               <label className="form-label">Batch Name / बॅचचे नाव *</label>
               <input type="text" name="name" className="form-input" required placeholder="e.g. Batch 142" />
