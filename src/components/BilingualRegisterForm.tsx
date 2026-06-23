@@ -299,6 +299,16 @@ export default function BilingualRegisterForm({ batches = [] }: { batches?: any[
             <label className="form-label">Address / पत्ता</label>
             <textarea name="address" className="form-textarea" rows={3} placeholder="Full home address..."></textarea>
           </div>
+
+          <div className="form-group">
+            <label className="form-label">Taluka / तालुका</label>
+            <input type="text" name="taluka" className="form-input" placeholder="Taluka" />
+          </div>
+
+          <div className="form-group">
+            <label className="form-label">Pincode / पिन कोड</label>
+            <input type="text" name="pincode" className="form-input" placeholder="Pincode" />
+          </div>
           
           <div className="form-group">
             <label className="form-label">Mobile Number / मोबाईल क्रमांक *</label>

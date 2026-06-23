@@ -154,6 +154,8 @@ export default async function RecruitProfile({ params }: { params: Promise<{ id:
             <div style={{ display: "flex", justifyContent: "space-between" }}><span className="text-muted">Appt. Category / नियुक्ती प्रवर्ग</span> <strong style={{ color: "white" }}>{recruit.appointmentCategory || "-"}</strong></div>
             <div style={{ display: "flex", justifyContent: "space-between" }}><span className="text-muted">Appt. Type / नियुक्ती प्रकार</span> <strong style={{ color: "white" }}>{recruit.appointmentType || "-"}</strong></div>
             <div style={{ display: "flex", justifyContent: "space-between", flexWrap: "wrap", gap: "0.5rem" }}><span className="text-muted">Address / पत्ता</span> <strong style={{ color: "white", textAlign: "right", maxWidth: "250px" }}>{recruit.address || "-"}</strong></div>
+            <div style={{ display: "flex", justifyContent: "space-between" }}><span className="text-muted">Taluka / तालुका</span> <strong style={{ color: "white" }}>{recruit.taluka || "-"}</strong></div>
+            <div style={{ display: "flex", justifyContent: "space-between" }}><span className="text-muted">Pincode / पिन कोड</span> <strong style={{ color: "white" }}>{recruit.pincode || "-"}</strong></div>
           </div>
         </div>
 

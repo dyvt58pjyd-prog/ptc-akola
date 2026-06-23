@@ -312,11 +312,11 @@ export default async function RecruitReport({ params }: { params: Promise<{ id: 
           </div>
           <div className="data-item">
             <div className="data-label">तालुका / TALUKA</div>
-            <div className="data-value">-</div>
+            <div className="data-value">{recruit.taluka || "-"}</div>
           </div>
           <div className="data-item">
             <div className="data-label">पिनकोड / PINCODE</div>
-            <div className="data-value">-</div>
+            <div className="data-value">{recruit.pincode || "-"}</div>
           </div>
         </div>
 

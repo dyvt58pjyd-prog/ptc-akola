@@ -48,6 +48,8 @@ model Recruit {
   education     String
   bloodGroup    String?
   address       String?
+  taluka        String?
+  pincode       String?
   appointmentCategory String?
   appointmentType String?
   height        Float
