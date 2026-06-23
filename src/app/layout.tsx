@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import "./globals.css";
 import Sidebar from "@/components/Sidebar";
+import SplashScreen from "@/components/SplashScreen";
 import { getSession } from "@/lib/auth";
 
 export const metadata: Metadata = {
@@ -19,6 +20,7 @@ export default async function RootLayout({
   return (
     <html lang="en">
       <body>
+        <SplashScreen />
         <div className="app-container">
           {/* Sidebar Navigation */}
           <Sidebar role={session?.role || null} />
