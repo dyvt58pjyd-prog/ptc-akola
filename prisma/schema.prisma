@@ -39,7 +39,7 @@ model Recruit {
   id            String   @id @default(cuid())
   name          String
   age           Int
-  chestNumber   String   @unique
+  chestNumber   String
   unit          String
   squadNumber   String?
   homeDistrict  String
@@ -56,6 +56,9 @@ model Recruit {
   religion      String?
   caste         String?
   category      String?
+  whatsappNumber String?
+  isReturnedToDistrict Boolean @default(false)
+  returnedToDistrictDate DateTime?
   photoUrl      String?
 
   createdAt     DateTime @default(now())
@@ -67,6 +70,8 @@ model Recruit {
 
   batchId       String?
   batch         Batch? @relation(fields: [batchId], references: [id])
+
+  @@unique([chestNumber, batchId])
 }
 
 model Attendance {

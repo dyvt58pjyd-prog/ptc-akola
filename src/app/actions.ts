@@ -23,6 +23,7 @@ export async function registerRecruit(formData: FormData) {
         squadNumber: toUpperCaseHelper(data.squadNumber as string),
         homeDistrict: data.homeDistrict as string,
         mobile: data.mobile as string,
+        whatsappNumber: data.whatsappNumber ? (data.whatsappNumber as string) : null,
         maritalStatus: data.maritalStatus as string,
         education: toUpperCaseHelper(data.education as string) as string,
         height: parseFloat(data.height as string),
@@ -44,7 +45,7 @@ export async function registerRecruit(formData: FormData) {
     return { success: true, recruitId: recruit.id };
   } catch (error) {
     console.error("Failed to register recruit:", error);
-    return { success: false, error: "Failed to register recruit. Chest number must be unique." };
+    return { success: false, error: "Failed to register recruit. This chest number may already be taken in this batch." };
   }
 }
 
@@ -202,7 +203,7 @@ export async function deleteEvaluation(evaluationId: string) {
       where: { id: evaluationId }
     });
 
-    revalidatePath("/directory");
+    revalidatePath("/", "layout");
     return { success: true };
   } catch (error) {
     console.error("Failed to delete evaluation:", error);
@@ -225,7 +226,7 @@ export async function deleteRecruit(recruitId: string) {
       prisma.recruit.delete({ where: { id: recruitId } }),
     ]);
 
-    revalidatePath("/directory");
+    revalidatePath("/", "layout");
     return { success: true };
   } catch (error) {
     console.error("Failed to delete recruit:", error);
@@ -252,6 +253,7 @@ export async function updateRecruit(recruitId: string, formData: FormData) {
         squadNumber: toUpperCaseHelper(data.squadNumber as string),
         homeDistrict: data.homeDistrict as string,
         mobile: data.mobile as string,
+        whatsappNumber: data.whatsappNumber ? (data.whatsappNumber as string) : null,
         maritalStatus: data.maritalStatus as string,
         education: toUpperCaseHelper(data.education as string) as string,
         height: parseFloat(data.height as string),
@@ -269,12 +271,11 @@ export async function updateRecruit(recruitId: string, formData: FormData) {
       }
     });
     
-    revalidatePath("/directory");
-    revalidatePath(`/directory/${recruitId}`);
+    revalidatePath("/", "layout");
     return { success: true, recruitId: recruit.id };
   } catch (error) {
     console.error("Failed to update recruit:", error);
-    return { success: false, error: "Failed to update recruit. Chest number must be unique." };
+    return { success: false, error: "Failed to update recruit. Check if chest number already exists in this batch." };
   }
 }
 

@@ -304,6 +304,11 @@ export default function BilingualRegisterForm({ batches = [] }: { batches?: any[
             <label className="form-label">Mobile Number / मोबाईल क्रमांक *</label>
             <input name="mobile" type="tel" className="form-input" required placeholder="e.g. 9876543210" />
           </div>
+
+          <div className="form-group">
+            <label className="form-label">WhatsApp Number / व्हॉट्सॲप नंबर</label>
+            <input name="whatsappNumber" type="tel" className="form-input" placeholder="e.g. 9876543210" />
+          </div>
           
           <div className="form-group">
             <label className="form-label">Marital Status / वैवाहिक स्थिती *</label>

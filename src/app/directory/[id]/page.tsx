@@ -73,6 +73,18 @@ export default async function RecruitProfile({ params }: { params: Promise<{ id:
         </div>
       </div>
 
+      {recruit.isReturnedToDistrict && (
+        <div style={{ backgroundColor: "rgba(239, 68, 68, 0.1)", border: "1px solid var(--error)", color: "#fca5a5", padding: "1.5rem", borderRadius: "var(--radius-lg)", marginBottom: "2.5rem", display: "flex", alignItems: "center", gap: "1rem" }}>
+          <div style={{ backgroundColor: "rgba(239, 68, 68, 0.2)", padding: "0.75rem", borderRadius: "50%", color: "var(--error)" }}>
+            <Target size={28} />
+          </div>
+          <div>
+            <h3 style={{ fontSize: "1.25rem", fontWeight: "bold", margin: 0 }}>RETURNED TO DISTRICT / जिल्ह्यात परत पाठवले</h3>
+            <p style={{ margin: "0.25rem 0 0 0", opacity: 0.9 }}>This recruit has been marked as returned to their home district on <strong>{recruit.returnedToDistrictDate ? new Date(recruit.returnedToDistrictDate).toLocaleDateString('en-GB') : "Unknown Date"}</strong> and is no longer active in training.</p>
+          </div>
+        </div>
+      )}
+
       {/* 2. Primary Identity Card (Hero Section) */}
       <div className="glass-card" style={{ marginBottom: "2.5rem", padding: "3rem", display: "flex", flexWrap: "wrap", gap: "3rem", alignItems: "center", position: "relative", overflow: "hidden" }}>
         {/* Subtle background glow */}
@@ -135,6 +147,7 @@ export default async function RecruitProfile({ params }: { params: Promise<{ id:
             <div style={{ display: "flex", justifyContent: "space-between" }}><span className="text-muted">Training Batch / प्रशिक्षण बॅच</span> <strong style={{ color: "var(--accent-gold)" }}>{recruit.batch ? `${recruit.batch.name} (${new Date(recruit.batch.startDate).toLocaleDateString('en-GB')} - ${new Date(recruit.batch.endDate).toLocaleDateString('en-GB')})` : "Unassigned"}</strong></div>
             <div style={{ display: "flex", justifyContent: "space-between" }}><span className="text-muted">Age / वय</span> <strong style={{ color: "white" }}>{recruit.age} Years</strong></div>
             <div style={{ display: "flex", justifyContent: "space-between" }}><span className="text-muted">Sex / लिंग</span> <strong style={{ color: "white" }}>{recruit.sex}</strong></div>
+            <div style={{ display: "flex", justifyContent: "space-between" }}><span className="text-muted">Contact / संपर्क</span> <strong style={{ color: "white" }}>📞 {recruit.mobile} {recruit.whatsappNumber ? `| 💬 ${recruit.whatsappNumber}` : ""}</strong></div>
             <div style={{ display: "flex", justifyContent: "space-between" }}><span className="text-muted">Marital Status / वैवाहिक स्थिती</span> <strong style={{ color: "white" }}>{recruit.maritalStatus}</strong></div>
             <div style={{ display: "flex", justifyContent: "space-between" }}><span className="text-muted">Religion/Caste / धर्म/जात</span> <strong style={{ color: "white" }}>{recruit.religion || "-"} / {recruit.caste || "-"}</strong></div>
             <div style={{ display: "flex", justifyContent: "space-between" }}><span className="text-muted">Category / प्रवर्ग</span> <strong style={{ color: "white" }}>{recruit.category || "-"}</strong></div>

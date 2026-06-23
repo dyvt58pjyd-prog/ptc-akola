@@ -89,3 +89,30 @@ export async function registerLeave(formData: FormData) {
     return { success: false, error: "Failed to register leave." };
   }
 }
+
+export async function markDistrictReturn(formData: FormData) {
+  try {
+    const session = await getSession();
+    if (!session || session.role !== "OFFICER") {
+      return { success: false, error: "Unauthorized" };
+    }
+
+    const recruitId = formData.get("recruitId") as string;
+    const returnDate = new Date(formData.get("returnDate") as string);
+
+    await prisma.recruit.update({
+      where: { id: recruitId },
+      data: {
+        isReturnedToDistrict: true,
+        returnedToDistrictDate: returnDate,
+      }
+    });
+
+    revalidatePath("/officer/attendance");
+    revalidatePath("/directory");
+    return { success: true };
+  } catch (error) {
+    console.error("Mark district return failed", error);
+    return { success: false, error: "Failed to mark district return." };
+  }
+}

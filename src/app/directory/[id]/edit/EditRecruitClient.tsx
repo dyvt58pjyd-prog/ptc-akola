@@ -301,6 +301,11 @@ export default function EditRecruitClient({ recruit, batches = [] }: { recruit: 
             <label className="form-label">Mobile Number / मोबाईल क्रमांक *</label>
             <input name="mobile" type="tel" className="form-input" required defaultValue={recruit.mobile} />
           </div>
+
+          <div className="form-group">
+            <label className="form-label">WhatsApp Number / व्हॉट्सॲप नंबर</label>
+            <input name="whatsappNumber" type="tel" className="form-input" defaultValue={recruit.whatsappNumber || ""} />
+          </div>
           
           <div className="form-group">
             <label className="form-label">Marital Status / वैवाहिक स्थिती *</label>

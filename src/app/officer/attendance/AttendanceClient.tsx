@@ -1,13 +1,14 @@
 "use client";
 
 import { useState } from "react";
-import { submitBulkAttendance, registerLeave } from "@/app/actions/attendance";
-import { Save, CalendarRange, X } from "lucide-react";
+import { submitBulkAttendance, registerLeave, markDistrictReturn } from "@/app/actions/attendance";
+import { Save, CalendarRange, X, Target } from "lucide-react";
 
 export default function AttendanceClient({ recruits }: { recruits: any[] }) {
   const [date, setDate] = useState(new Date().toISOString().split("T")[0]);
   const [loading, setLoading] = useState(false);
   const [showLeaveModal, setShowLeaveModal] = useState(false);
+  const [showDistrictReturnModal, setShowDistrictReturnModal] = useState(false);
   const [statusMsg, setStatusMsg] = useState<{type: 'success'|'error', text: string} | null>(null);
 
   // Multi-select state
@@ -76,6 +77,20 @@ export default function AttendanceClient({ recruits }: { recruits: any[] }) {
     setLoading(false);
   };
 
+  const handleDistrictReturnSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+    setLoading(true);
+    const formData = new FormData(e.currentTarget);
+    const result = await markDistrictReturn(formData);
+    if (result.success) {
+      setShowDistrictReturnModal(false);
+      setStatusMsg({ type: "success", text: "Recruit returned to district successfully! / जिल्ह्यात परत पाठवले!" });
+    } else {
+      setStatusMsg({ type: "error", text: result.error || "Failed to mark return. / जतन करण्यात अयशस्वी." });
+    }
+    setLoading(false);
+  };
+
   return (
     <>
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "2rem" }}>
@@ -84,9 +99,14 @@ export default function AttendanceClient({ recruits }: { recruits: any[] }) {
           <input type="date" className="form-input" value={date} onChange={e => setDate(e.target.value)} style={{ width: "auto" }} />
         </div>
         
-        <button onClick={() => setShowLeaveModal(true)} className="btn btn-outline" style={{ borderColor: "var(--accent-gold)", color: "var(--accent-gold)" }}>
-          <CalendarRange size={20} /> Register Leave / रजा नोंदवा
-        </button>
+        <div style={{ display: "flex", gap: "1rem" }}>
+          <button onClick={() => setShowLeaveModal(true)} className="btn btn-outline" style={{ borderColor: "var(--accent-gold)", color: "var(--accent-gold)" }}>
+            <CalendarRange size={20} /> Register Leave / रजा नोंदवा
+          </button>
+          <button onClick={() => setShowDistrictReturnModal(true)} className="btn btn-outline" style={{ borderColor: "var(--error)", color: "var(--error)" }}>
+            <Target size={20} /> Mark District Return / जिल्ह्यात परत पाठवा
+          </button>
+        </div>
       </div>
 
       {statusMsg && (
@@ -216,6 +236,37 @@ export default function AttendanceClient({ recruits }: { recruits: any[] }) {
               </div>
               <button type="submit" className="btn btn-accent" style={{ width: "100%" }} disabled={loading}>
                 {loading ? "Registering..." : "Register Leave / रजा नोंदवा"}
+              </button>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* District Return Modal */}
+      {showDistrictReturnModal && (
+        <div style={{ position: "fixed", top: 0, left: 0, right: 0, bottom: 0, backgroundColor: "rgba(0,0,0,0.8)", backdropFilter: "blur(4px)", display: "flex", alignItems: "center", justifyContent: "center", zIndex: 100 }}>
+          <div className="glass-card" style={{ width: "100%", maxWidth: "500px", position: "relative", border: "1px solid rgba(239, 68, 68, 0.3)" }}>
+            <button onClick={() => setShowDistrictReturnModal(false)} style={{ position: "absolute", top: "1rem", right: "1rem", background: "none", border: "none", color: "white", cursor: "pointer" }}>
+              <X size={24} />
+            </button>
+            <h2 className="heading-2" style={{ color: "#fca5a5", display: "flex", alignItems: "center", gap: "0.5rem" }}>
+              <Target size={24} /> Mark District Return
+            </h2>
+            <p className="text-muted" style={{ marginBottom: "1.5rem" }}>WARNING: This will permanently mark the recruit as returned to their home district and flag their dossier.</p>
+            <form onSubmit={handleDistrictReturnSubmit}>
+              <div className="form-group">
+                <label className="form-label">Recruit / प्रशिक्षणार्थी</label>
+                <select name="recruitId" className="form-select" required style={{ borderColor: "rgba(239, 68, 68, 0.5)" }}>
+                  <option value="">-- Select --</option>
+                  {recruits.map(r => <option key={r.id} value={r.id}>{r.chestNumber} - {r.name}</option>)}
+                </select>
+              </div>
+              <div className="form-group">
+                <label className="form-label">Date of Return / परत पाठवल्याची तारीख</label>
+                <input type="date" name="returnDate" className="form-input" required defaultValue={new Date().toISOString().split("T")[0]} style={{ borderColor: "rgba(239, 68, 68, 0.5)" }} />
+              </div>
+              <button type="submit" className="btn btn-primary" style={{ width: "100%", backgroundColor: "var(--error)", borderColor: "var(--error)" }} disabled={loading}>
+                {loading ? "Processing..." : "Confirm Return / निश्चित करा"}
               </button>
             </form>
           </div>
