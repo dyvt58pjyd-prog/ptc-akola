@@ -1,6 +1,7 @@
 import { prisma } from "@/lib/prisma";
 import CreateOfficerForm from "@/components/CreateOfficerForm";
 import { ShieldAlert, ArrowRight } from "lucide-react";
+import Link from "next/link";
 
 export default async function ManageOfficers() {
   const officers = await prisma.user.findMany({
@@ -31,6 +32,7 @@ export default async function ManageOfficers() {
                   <th style={{ padding: "1rem 0", color: "var(--text-muted)" }}>Username</th>
                   <th style={{ padding: "1rem 0", color: "var(--text-muted)" }}>Assigned Range</th>
                   <th style={{ padding: "1rem 0", color: "var(--text-muted)" }}>Status</th>
+                  <th style={{ padding: "1rem 0", color: "var(--text-muted)", textAlign: "right" }}>Actions</th>
                 </tr>
               </thead>
               <tbody>
@@ -55,6 +57,15 @@ export default async function ManageOfficers() {
                       <span style={{ color: "var(--accent-gold)", display: "flex", alignItems: "center", gap: "0.25rem", fontSize: "0.875rem" }}>
                         <ShieldAlert size={14} /> Active
                       </span>
+                    </td>
+                    <td style={{ padding: "1rem 0", textAlign: "right" }}>
+                      <Link 
+                        href={`/admin/officers/${officer.id}/edit`} 
+                        className="btn btn-outline" 
+                        style={{ padding: "0.5rem 1rem", fontSize: "0.875rem", display: "inline-block" }}
+                      >
+                        Edit / Password
+                      </Link>
                     </td>
                   </tr>
                 ))}

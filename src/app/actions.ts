@@ -195,6 +195,35 @@ export async function createOfficer(formData: FormData) {
   }
 }
 
+export async function updateOfficer(officerId: string, formData: FormData) {
+  const data = Object.fromEntries(formData.entries());
+  
+  try {
+    const updateData: any = {
+      username: data.username as string,
+      fullName: data.fullName as string,
+      minChestNumber: parseInt(data.minChestNumber as string),
+      maxChestNumber: parseInt(data.maxChestNumber as string),
+    };
+
+    // If password is provided, hash it and include in update
+    if (data.password && (data.password as string).trim() !== "") {
+      updateData.password = await bcrypt.hash(data.password as string, 10);
+    }
+
+    await prisma.user.update({
+      where: { id: officerId },
+      data: updateData
+    });
+    
+    revalidatePath("/admin/officers");
+    return { success: true };
+  } catch (error) {
+    console.error("Failed to update officer:", error);
+    return { error: "Failed to update officer. Username might already exist." };
+  }
+}
+
 export async function deleteEvaluation(evaluationId: string) {
   try {
     const session = await getSession();
