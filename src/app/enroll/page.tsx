@@ -1,8 +1,14 @@
 import BilingualRegisterForm from "@/components/BilingualRegisterForm";
 import Link from "next/link";
 import { ArrowLeft } from "lucide-react";
+import { prisma } from "@/lib/prisma";
 
-export default function PublicEnrollment() {
+export default async function PublicEnrollment() {
+  const batches = await prisma.batch.findMany({ 
+    where: { isActive: true }, 
+    orderBy: { createdAt: "desc" } 
+  });
+
   return (
     <div style={{ display: "flex", flexDirection: "column", justifyContent: "center", alignItems: "center", minHeight: "calc(100vh - 4rem)" }}>
       <div style={{ maxWidth: "800px", margin: "0 auto", paddingBottom: "1.5rem" }}>
@@ -10,7 +16,7 @@ export default function PublicEnrollment() {
           <ArrowLeft size={16} /> Back to Login / लॉगिनवर परत जा
         </Link>
       </div>
-      <BilingualRegisterForm />
+      <BilingualRegisterForm batches={batches} />
     </div>
   );
 }
