@@ -3,6 +3,8 @@ import Link from "next/link";
 import { ArrowLeft } from "lucide-react";
 import { prisma } from "@/lib/prisma";
 
+export const dynamic = "force-dynamic";
+
 export default async function PublicEnrollment() {
   const batches = await prisma.batch.findMany({ 
     where: { isActive: true }, 
