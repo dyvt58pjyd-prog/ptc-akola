@@ -87,8 +87,20 @@ export default function Home() {
           <p className="text-muted" style={{ marginBottom: "1rem", fontSize: "0.875rem" }}>
             Are you a new recruit? / तुम्ही नवीन प्रशिक्षणार्थी आहात का?
           </p>
-          <Link href="/enroll" className="btn btn-outline" style={{ display: "inline-block", width: "100%" }}>
-            Fill Enrollment Form / नोंदणी फॉर्म भरा
+          <Link href="/enroll" className="btn" style={{ 
+            display: "inline-block", 
+            width: "100%", 
+            padding: "1.25rem",
+            fontSize: "1.15rem",
+            fontWeight: "bold",
+            background: "linear-gradient(135deg, #ef4444, #dc2626)",
+            color: "white",
+            border: "2px solid #f87171",
+            boxShadow: "0 10px 30px rgba(239, 68, 68, 0.4)",
+            textAlign: "center",
+            borderRadius: "var(--radius-lg)"
+          }}>
+            📋 Fill Enrollment Form / नोंदणी फॉर्म भरा
           </Link>
         </div>
       </div>
