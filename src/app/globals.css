@@ -267,6 +267,7 @@ a {
   gap: 0.5rem;
   padding: 1.5rem 1rem;
   flex: 1;
+  overflow-y: auto;
 }
 
 .nav-link {
