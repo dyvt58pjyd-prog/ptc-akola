@@ -1,0 +1,124 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
+}
+
+model User {
+  id              String   @id @default(cuid())
+  username        String   @unique
+  password        String
+  role            String   // "ADMIN" or "OFFICER"
+  fullName        String?
+  minChestNumber  Int?
+  maxChestNumber  Int?
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+  evaluations     Evaluation[]
+}
+
+model Batch {
+  id          String   @id @default(cuid())
+  name        String   @unique
+  startDate   DateTime
+  endDate     DateTime
+  isActive    Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  recruits    Recruit[]
+}
+
+model Recruit {
+  id            String   @id @default(cuid())
+  name          String
+  age           Int
+  chestNumber   String   @unique
+  unit          String
+  squadNumber   String?
+  homeDistrict  String
+  mobile        String
+  maritalStatus String
+  education     String
+  bloodGroup    String?
+  address       String?
+  appointmentCategory String?
+  appointmentType String?
+  height        Float
+  weight        Float
+  sex           String
+  religion      String?
+  caste         String?
+  category      String?
+  photoUrl      String?
+
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  attendances   Attendance[]
+  evaluations   Evaluation[]
+  leaves        Leave[]
+
+  batchId       String?
+  batch         Batch? @relation(fields: [batchId], references: [id])
+}
+
+model Attendance {
+  id              String   @id @default(cuid())
+  recruitId       String
+  date            DateTime
+  morningStatus   String   // "PRESENT", "ABSENT"
+  morningReason   String?
+  afternoonStatus String   // "PRESENT", "ABSENT"
+  afternoonReason String?
+
+  recruit         Recruit  @relation(fields: [recruitId], references: [id])
+
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  @@unique([recruitId, date])
+}
+
+model Evaluation {
+  id               String   @id @default(cuid())
+  recruitId        String
+  officerId        String
+  instructorName   String?
+  week             String   // Format: "2026-W25"
+  year             Int
+
+  physicalTraining String
+  drills           String
+  weaponDrill      String
+  weaponTactics    String
+  fieldCrafts      String
+  overallRemarks   String
+
+  recruit          Recruit  @relation(fields: [recruitId], references: [id])
+  officer          User     @relation(fields: [officerId], references: [id])
+
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+
+  @@unique([recruitId, week, year])
+}
+
+model Leave {
+  id              String   @id @default(cuid())
+  recruitId       String
+  startDate       DateTime
+  endDate         DateTime
+  reason          String
+
+  recruit         Recruit  @relation(fields: [recruitId], references: [id])
+
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+}
