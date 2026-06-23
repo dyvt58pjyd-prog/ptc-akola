@@ -159,7 +159,8 @@ export async function authenticate(prevState: any, formData: FormData) {
     return { success: true, role: user.role };
   } catch (error) {
     console.error("Authentication error:", error);
-    return { error: "An unexpected error occurred." };
+    console.error("Authentication error:", error);
+    return { error: error instanceof Error ? error.message : "An unexpected error occurred." };
   }
 }
 
