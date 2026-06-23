@@ -80,8 +80,8 @@ export default async function OfficerDashboard() {
       {/* Quick Actions */}
       <div className="grid-2" style={{ marginBottom: "2rem" }}>
         <Link href="/officer/register" style={{ textDecoration: "none" }}>
-          <div className="glass-card" style={{ display: "flex", alignItems: "center", gap: "1.5rem", padding: "1.5rem", transition: "all 0.3s ease" }}>
-            <div style={{ display: "flex", alignItems: "center", justifyContent: "center", width: "60px", height: "60px", backgroundColor: "rgba(234, 179, 8, 0.1)", color: "var(--accent-gold)", borderRadius: "var(--radius-full)" }}>
+          <div className="glass-card action-card" style={{ display: "flex", alignItems: "center", gap: "1.5rem", padding: "1.5rem", transition: "all 0.3s ease" }}>
+            <div style={{ flexShrink: 0, display: "flex", alignItems: "center", justifyContent: "center", width: "60px", height: "60px", backgroundColor: "rgba(234, 179, 8, 0.1)", color: "var(--accent-gold)", borderRadius: "var(--radius-full)" }}>
               <UserPlus size={32} />
             </div>
             <div>
@@ -92,8 +92,8 @@ export default async function OfficerDashboard() {
         </Link>
 
         <Link href="/officer/evaluate" style={{ textDecoration: "none" }}>
-          <div className="glass-card" style={{ display: "flex", alignItems: "center", gap: "1.5rem", padding: "1.5rem", transition: "all 0.3s ease" }}>
-            <div style={{ display: "flex", alignItems: "center", justifyContent: "center", width: "60px", height: "60px", backgroundColor: "rgba(59, 130, 246, 0.1)", color: "var(--accent-blue)", borderRadius: "var(--radius-full)" }}>
+          <div className="glass-card action-card" style={{ display: "flex", alignItems: "center", gap: "1.5rem", padding: "1.5rem", transition: "all 0.3s ease" }}>
+            <div style={{ flexShrink: 0, display: "flex", alignItems: "center", justifyContent: "center", width: "60px", height: "60px", backgroundColor: "rgba(59, 130, 246, 0.1)", color: "var(--accent-blue)", borderRadius: "var(--radius-full)" }}>
               <ClipboardCheck size={32} />
             </div>
             <div>

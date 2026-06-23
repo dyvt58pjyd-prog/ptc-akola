@@ -527,4 +527,10 @@ a {
   .glass-card {
     padding: 1.5rem;
   }
+
+  .action-card {
+    flex-direction: column !important;
+    text-align: center;
+    gap: 1rem !important;
+  }
 }
