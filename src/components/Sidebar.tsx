@@ -40,7 +40,7 @@ export default function Sidebar({ role }: { role: string | null }) {
           />
           <span>PTC Akola</span>
         </Link>
-        <div onClick={() => setIsOpen(false)}>
+        <div onClick={() => setIsOpen(false)} style={{ display: "flex", flexDirection: "column", flex: 1, minHeight: 0 }}>
           <Navigation role={role} />
         </div>
       </aside>
