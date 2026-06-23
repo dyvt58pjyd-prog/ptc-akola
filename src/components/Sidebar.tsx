@@ -1,0 +1,49 @@
+"use client";
+
+import { useState } from "react";
+import Link from "next/link";
+import Navigation from "./Navigation";
+import { Menu, X } from "lucide-react";
+
+export default function Sidebar({ role }: { role: string | null }) {
+  const [isOpen, setIsOpen] = useState(false);
+
+  if (!role) return null;
+
+  return (
+    <>
+      {/* Mobile Hamburger Button */}
+      <button 
+        className="mobile-menu-btn"
+        onClick={() => setIsOpen(!isOpen)}
+        aria-label="Toggle menu"
+      >
+        {isOpen ? <X size={24} /> : <Menu size={24} />}
+      </button>
+
+      {/* Sidebar Overlay for mobile */}
+      {isOpen && (
+        <div 
+          className="sidebar-overlay"
+          onClick={() => setIsOpen(false)}
+        />
+      )}
+
+      {/* Sidebar Content */}
+      <aside className={`sidebar ${isOpen ? "open" : ""}`}>
+        <Link href="/" className="sidebar-brand" onClick={() => setIsOpen(false)}>
+          <img
+            src="/logo.png"
+            alt="Maharashtra Police Training Directorate Logo"
+            className="sidebar-logo"
+            style={{ borderRadius: "50%" }}
+          />
+          <span>PTC Akola</span>
+        </Link>
+        <div onClick={() => setIsOpen(false)}>
+          <Navigation role={role} />
+        </div>
+      </aside>
+    </>
+  );
+}
