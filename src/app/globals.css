@@ -137,6 +137,9 @@ a {
   left: 0;
   height: 100vh;
   z-index: 50;
+  will-change: transform;
+  transform: translateZ(0);
+  backface-visibility: hidden;
 }
 
 .main-content {
@@ -144,14 +147,18 @@ a {
   margin-left: 260px; /* offset for fixed sidebar */
   padding: 2rem 3rem;
   width: calc(100% - 260px);
-  animation: fadeIn 0.4s ease-out forwards;
+  animation: fadeIn 0.4s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+  will-change: transform, opacity;
+  transform: translateZ(0);
 }
 
 .main-content-full {
   flex: 1;
   padding: 2rem 3rem;
   width: 100%;
-  animation: fadeIn 0.4s ease-out forwards;
+  animation: fadeIn 0.4s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+  will-change: transform, opacity;
+  transform: translateZ(0);
 }
 
 /* Premium Glassmorphism Cards */
@@ -164,7 +171,10 @@ a {
   border-radius: var(--radius-lg);
   box-shadow: var(--shadow-glow);
   padding: 2rem;
-  transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1), box-shadow 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1), box-shadow 0.3s cubic-bezier(0.4, 0, 0.2, 1), border-color 0.3s ease;
+  will-change: transform, box-shadow;
+  transform: translateZ(0);
+  backface-visibility: hidden;
 }
 
 .glass-card:hover {
@@ -186,7 +196,10 @@ a {
   border-radius: var(--radius-md);
   border: 1px solid transparent;
   cursor: pointer;
-  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1), box-shadow 0.3s cubic-bezier(0.4, 0, 0.2, 1), background 0.3s ease, border-color 0.3s ease;
+  will-change: transform, box-shadow;
+  transform: translateZ(0);
+  backface-visibility: hidden;
 }
 
 .btn-primary {
@@ -565,12 +578,12 @@ a {
   }
   
   .sidebar {
-    transform: translateX(-100%);
+    transform: translateX(-100%) translateZ(0);
     transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
   }
   
   .sidebar.open {
-    transform: translateX(0);
+    transform: translateX(0) translateZ(0);
   }
 
   .sidebar-overlay {
