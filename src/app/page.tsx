@@ -59,6 +59,7 @@ export default function Home() {
               name="username" 
               type="text" 
               className="form-input" 
+              style={{ textTransform: "none" }}
               required 
               placeholder="e.g. admin" 
             />
@@ -71,6 +72,7 @@ export default function Home() {
               name="password" 
               type="password" 
               className="form-input" 
+              style={{ textTransform: "none" }}
               required 
               placeholder="••••••••" 
             />
