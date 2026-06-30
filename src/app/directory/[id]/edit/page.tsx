@@ -3,14 +3,15 @@ import { getSession } from "@/lib/auth";
 import { redirect } from "next/navigation";
 import EditRecruitClient from "./EditRecruitClient";
 
-export default async function EditRecruitPage({ params }: { params: { id: string } }) {
+export default async function EditRecruitPage({ params }: { params: Promise<{ id: string }> }) {
+  const { id } = await params;
   const session = await getSession();
   if (!session || (session.role !== "ADMIN" && session.role !== "OFFICER")) {
     redirect("/");
   }
 
   const recruit = await prisma.recruit.findUnique({
-    where: { id: params.id }
+    where: { id }
   });
 
   if (!recruit) {
