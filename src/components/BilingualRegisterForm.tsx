@@ -159,6 +159,11 @@ export default function BilingualRegisterForm({ batches = [] }: { batches?: any[
           </div>
           
           <div className="form-group">
+            <label className="form-label">Date of Entry to PTC / PTC मध्ये प्रवेशाची तारीख</label>
+            <input name="dateOfEntry" type="date" className="form-input" />
+          </div>
+          
+          <div className="form-group">
             <label className="form-label">Age / वय *</label>
             <input name="age" type="number" className="form-input" required placeholder="e.g. 24" />
           </div>
@@ -308,6 +313,11 @@ export default function BilingualRegisterForm({ batches = [] }: { batches?: any[
           <div className="form-group">
             <label className="form-label">Pincode / पिन कोड</label>
             <input type="text" name="pincode" className="form-input" placeholder="Pincode" />
+          </div>
+
+          <div className="form-group">
+            <label className="form-label">Nearest Police Station / जवळचे पोलीस स्टेशन</label>
+            <input type="text" name="nearestPoliceStation" className="form-input" placeholder="e.g. City Police Station" />
           </div>
           
           <div className="form-group">

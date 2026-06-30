@@ -40,6 +40,8 @@ export async function registerRecruit(formData: FormData) {
         appointmentType: data.appointmentType ? (data.appointmentType as string) : null,
         batchId: data.batchId ? (data.batchId as string) : null,
         photoUrl: data.photoUrl ? (data.photoUrl as string) : null,
+        nearestPoliceStation: data.nearestPoliceStation ? toUpperCaseHelper(data.nearestPoliceStation as string) : null,
+        dateOfEntry: data.dateOfEntry ? new Date(data.dateOfEntry as string) : null,
       }
     });
     
@@ -302,6 +304,8 @@ export async function updateRecruit(recruitId: string, formData: FormData) {
         appointmentType: data.appointmentType ? (data.appointmentType as string) : null,
         batchId: data.batchId ? (data.batchId as string) : null,
         photoUrl: data.photoUrl ? (data.photoUrl as string) : undefined, // only update if provided
+        nearestPoliceStation: data.nearestPoliceStation ? toUpperCaseHelper(data.nearestPoliceStation as string) : null,
+        dateOfEntry: data.dateOfEntry ? new Date(data.dateOfEntry as string) : null,
       }
     });
     

@@ -62,6 +62,8 @@ model Recruit {
   isReturnedToDistrict Boolean @default(false)
   returnedToDistrictDate DateTime?
   photoUrl      String?
+  nearestPoliceStation String?
+  dateOfEntry   DateTime?
 
   createdAt     DateTime @default(now())
   updatedAt     DateTime @updatedAt

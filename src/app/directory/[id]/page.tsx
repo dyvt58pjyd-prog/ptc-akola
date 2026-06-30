@@ -145,6 +145,7 @@ export default async function RecruitProfile({ params }: { params: Promise<{ id:
           </h3>
           <div style={{ display: "flex", flexDirection: "column", gap: "1.25rem" }}>
             <div style={{ display: "flex", justifyContent: "space-between" }}><span className="text-muted">Training Batch / प्रशिक्षण बॅच</span> <strong style={{ color: "var(--accent-gold)" }}>{recruit.batch ? `${recruit.batch.name} (${new Date(recruit.batch.startDate).toLocaleDateString('en-GB')} - ${new Date(recruit.batch.endDate).toLocaleDateString('en-GB')})` : "Unassigned"}</strong></div>
+            <div style={{ display: "flex", justifyContent: "space-between" }}><span className="text-muted">Date of Entry / प्रवेशाची तारीख</span> <strong style={{ color: "white" }}>{recruit.dateOfEntry ? new Date(recruit.dateOfEntry).toLocaleDateString('en-GB') : "-"}</strong></div>
             <div style={{ display: "flex", justifyContent: "space-between" }}><span className="text-muted">Age / वय</span> <strong style={{ color: "white" }}>{recruit.age} Years</strong></div>
             <div style={{ display: "flex", justifyContent: "space-between" }}><span className="text-muted">Sex / लिंग</span> <strong style={{ color: "white" }}>{recruit.sex}</strong></div>
             <div style={{ display: "flex", justifyContent: "space-between" }}><span className="text-muted">Contact / संपर्क</span> <strong style={{ color: "white" }}>📞 {recruit.mobile} {recruit.whatsappNumber ? `| 💬 ${recruit.whatsappNumber}` : ""}</strong></div>
@@ -156,6 +157,7 @@ export default async function RecruitProfile({ params }: { params: Promise<{ id:
             <div style={{ display: "flex", justifyContent: "space-between", flexWrap: "wrap", gap: "0.5rem" }}><span className="text-muted">Address / पत्ता</span> <strong style={{ color: "white", textAlign: "right", maxWidth: "250px" }}>{recruit.address || "-"}</strong></div>
             <div style={{ display: "flex", justifyContent: "space-between" }}><span className="text-muted">Taluka / तालुका</span> <strong style={{ color: "white" }}>{recruit.taluka || "-"}</strong></div>
             <div style={{ display: "flex", justifyContent: "space-between" }}><span className="text-muted">Pincode / पिन कोड</span> <strong style={{ color: "white" }}>{recruit.pincode || "-"}</strong></div>
+            <div style={{ display: "flex", justifyContent: "space-between", flexWrap: "wrap", gap: "0.5rem" }}><span className="text-muted">Nearest Police Station / जवळचे पोलीस स्टेशन</span> <strong style={{ color: "white", textAlign: "right", maxWidth: "250px" }}>{recruit.nearestPoliceStation || "-"}</strong></div>
           </div>
         </div>
 
