@@ -37,6 +37,7 @@ export default function SplashScreen() {
 
   return (
     <div 
+      className="print-hidden"
       style={{
         position: "fixed",
         top: 0,
