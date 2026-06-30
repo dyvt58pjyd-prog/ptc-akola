@@ -144,15 +144,10 @@ export default function BilingualRegisterForm({ batches = [] }: { batches?: any[
           </div>
         </div>
 
-        <h2 className="heading-2" style={{ marginBottom: "0.25rem" }}>Personal Information</h2>
-        <p className="text-muted" style={{ marginBottom: "1.5rem", fontSize: "0.875rem" }}>वैयक्तिक माहिती</p>
+        <h2 className="heading-2" style={{ marginBottom: "0.25rem", marginTop: "2rem", borderBottom: "1px solid var(--border)", paddingBottom: "0.5rem" }}>Police / Official Details</h2>
+        <p className="text-muted" style={{ marginBottom: "1.5rem", fontSize: "0.875rem" }}>पोलीस / अधिकृत माहिती</p>
         
         <div className="grid-2">
-          <div className="form-group">
-            <label className="form-label">Full Name / पूर्ण नाव *</label>
-            <input name="name" type="text" className="form-input" required placeholder="e.g. Rahul Sharma" />
-          </div>
-          
           <div className="form-group">
             <label className="form-label">Chest Number / छाती क्रमांक *</label>
             <input name="chestNumber" type="text" className="form-input" required placeholder="e.g. 101" />
@@ -161,6 +156,61 @@ export default function BilingualRegisterForm({ batches = [] }: { batches?: any[
           <div className="form-group">
             <label className="form-label">Date of Entry to PTC / PTC मध्ये प्रवेशाची तारीख</label>
             <input name="dateOfEntry" type="date" className="form-input" />
+          </div>
+          
+          <div className="form-group" style={{ gridColumn: "1 / -1", backgroundColor: "rgba(255,255,255,0.05)", padding: "1.5rem", borderRadius: "var(--radius-md)", border: "1px solid var(--border)" }}>
+            <label className="form-label" style={{ fontSize: "1.1rem" }}>Training Batch / प्रशिक्षण बॅच</label>
+            <p className="text-muted" style={{ fontSize: "0.875rem", marginBottom: "1rem" }}>Assign this recruit to an active training batch.</p>
+            <select name="batchId" className="form-select" style={{ borderColor: "var(--accent-gold)" }}>
+              <option value="">No Batch Assigned / कोणतीही बॅच नाही</option>
+              {batches.map(b => (
+                <option key={b.id} value={b.id}>{b.name} ({new Date(b.startDate).toLocaleDateString('en-GB')} - {new Date(b.endDate).toLocaleDateString('en-GB')})</option>
+              ))}
+            </select>
+          </div>
+
+          <div className="form-group">
+            <label className="form-label">Appointment Category / नियुक्ती प्रवर्ग</label>
+            <select name="appointmentCategory" className="form-select">
+              <option value="">Select / निवडा</option>
+              <option value="General">General</option>
+              <option value="Driver">Driver</option>
+              <option value="Bandsman">Bandsman</option>
+            </select>
+          </div>
+
+          <div className="form-group">
+            <label className="form-label">Appointment Type / नियुक्ती प्रकार</label>
+            <select name="appointmentType" className="form-select">
+              <option value="">Select / निवडा</option>
+              <option value="General">General</option>
+              <option value="Police Boy">Police Boy</option>
+              <option value="Compassionate">Compassionate</option>
+              <option value="Dharangrastha/Purgrastha">Dharangrastha/Purgrastha</option>
+              <option value="Sportsman">Sportsman</option>
+              <option value="Ex-Serviceman">Ex-Serviceman</option>
+              <option value="Homeguard">Homeguard</option>
+            </select>
+          </div>
+          
+          <div className="form-group">
+            <label className="form-label">Unit / घटक *</label>
+            <input name="unit" type="text" className="form-input" required placeholder="e.g. SRPF Gr 1" />
+          </div>
+          
+          <div className="form-group">
+            <label className="form-label">Squad Number / स्क्वाड क्रमांक</label>
+            <input name="squadNumber" type="text" className="form-input" placeholder="e.g. Squad A" />
+          </div>
+        </div>
+
+        <h2 className="heading-2" style={{ marginBottom: "0.25rem", marginTop: "2.5rem", borderBottom: "1px solid var(--border)", paddingBottom: "0.5rem" }}>Personal Information</h2>
+        <p className="text-muted" style={{ marginBottom: "1.5rem", fontSize: "0.875rem" }}>वैयक्तिक माहिती</p>
+
+        <div className="grid-2">
+          <div className="form-group">
+            <label className="form-label">Full Name / पूर्ण नाव *</label>
+            <input name="name" type="text" className="form-input" required placeholder="e.g. Rahul Sharma" />
           </div>
           
           <div className="form-group">
@@ -211,50 +261,30 @@ export default function BilingualRegisterForm({ batches = [] }: { batches?: any[
               <option value="EWS">EWS</option>
             </select>
           </div>
-
-          <div className="form-group" style={{ gridColumn: "1 / -1", backgroundColor: "rgba(255,255,255,0.05)", padding: "1.5rem", borderRadius: "var(--radius-md)", border: "1px solid var(--border)" }}>
-            <label className="form-label" style={{ fontSize: "1.1rem" }}>Training Batch / प्रशिक्षण बॅच</label>
-            <p className="text-muted" style={{ fontSize: "0.875rem", marginBottom: "1rem" }}>Assign this recruit to an active training batch.</p>
-            <select name="batchId" className="form-select" style={{ borderColor: "var(--accent-gold)" }}>
-              <option value="">No Batch Assigned / कोणतीही बॅच नाही</option>
-              {batches.map(b => (
-                <option key={b.id} value={b.id}>{b.name} ({new Date(b.startDate).toLocaleDateString('en-GB')} - {new Date(b.endDate).toLocaleDateString('en-GB')})</option>
-              ))}
-            </select>
-          </div>
-
-          <div className="form-group">
-            <label className="form-label">Appointment Category / नियुक्ती प्रवर्ग</label>
-            <select name="appointmentCategory" className="form-select">
-              <option value="">Select / निवडा</option>
-              <option value="General">General</option>
-              <option value="Driver">Driver</option>
-              <option value="Bandsman">Bandsman</option>
-            </select>
-          </div>
-
-          <div className="form-group">
-            <label className="form-label">Appointment Type / नियुक्ती प्रकार</label>
-            <select name="appointmentType" className="form-select">
-              <option value="">Select / निवडा</option>
-              <option value="General">General</option>
-              <option value="Police Boy">Police Boy</option>
-              <option value="Compassionate">Compassionate</option>
-              <option value="Dharangrastha/Purgrastha">Dharangrastha/Purgrastha</option>
-              <option value="Sportsman">Sportsman</option>
-              <option value="Ex-Serviceman">Ex-Serviceman</option>
-              <option value="Homeguard">Homeguard</option>
-            </select>
-          </div>
           
           <div className="form-group">
-            <label className="form-label">Unit / घटक *</label>
-            <input name="unit" type="text" className="form-input" required placeholder="e.g. SRPF Gr 1" />
+            <label className="form-label">Marital Status / वैवाहिक स्थिती *</label>
+            <select name="maritalStatus" className="form-select" required>
+              <option value="">Select / निवडा</option>
+              <option value="Single">Single / अविवाहित</option>
+              <option value="Married">Married / विवाहित</option>
+              <option value="Divorced">Divorced / घटस्फोटीत</option>
+            </select>
           </div>
-          
+        </div>
+
+        <h2 className="heading-2" style={{ marginBottom: "0.25rem", marginTop: "2.5rem", borderBottom: "1px solid var(--border)", paddingBottom: "0.5rem" }}>Contact & Address Details</h2>
+        <p className="text-muted" style={{ marginBottom: "1.5rem", fontSize: "0.875rem" }}>संपर्क आणि पत्ता</p>
+
+        <div className="grid-2">
           <div className="form-group">
-            <label className="form-label">Squad Number / स्क्वाड क्रमांक</label>
-            <input name="squadNumber" type="text" className="form-input" placeholder="e.g. Squad A" />
+            <label className="form-label">Mobile Number / मोबाईल क्रमांक *</label>
+            <input name="mobile" type="tel" className="form-input" required placeholder="e.g. 9876543210" />
+          </div>
+
+          <div className="form-group">
+            <label className="form-label">WhatsApp Number / व्हॉट्सॲप नंबर</label>
+            <input name="whatsappNumber" type="tel" className="form-input" placeholder="e.g. 9876543210" />
           </div>
           
           <div className="form-group">
@@ -299,15 +329,15 @@ export default function BilingualRegisterForm({ batches = [] }: { batches?: any[
               <option value="Yavatmal">Yavatmal / यवतमाळ</option>
             </select>
           </div>
+          
+          <div className="form-group">
+            <label className="form-label">Taluka / तालुका</label>
+            <input type="text" name="taluka" className="form-input" placeholder="Taluka" />
+          </div>
 
           <div className="form-group" style={{ gridColumn: "1 / -1" }}>
             <label className="form-label">Address / पत्ता</label>
             <textarea name="address" className="form-textarea" rows={3} placeholder="Full home address..."></textarea>
-          </div>
-
-          <div className="form-group">
-            <label className="form-label">Taluka / तालुका</label>
-            <input type="text" name="taluka" className="form-input" placeholder="Taluka" />
           </div>
 
           <div className="form-group">
@@ -319,27 +349,12 @@ export default function BilingualRegisterForm({ batches = [] }: { batches?: any[
             <label className="form-label">Nearest Police Station / जवळचे पोलीस स्टेशन</label>
             <input type="text" name="nearestPoliceStation" className="form-input" placeholder="e.g. City Police Station" />
           </div>
-          
-          <div className="form-group">
-            <label className="form-label">Mobile Number / मोबाईल क्रमांक *</label>
-            <input name="mobile" type="tel" className="form-input" required placeholder="e.g. 9876543210" />
-          </div>
+        </div>
 
-          <div className="form-group">
-            <label className="form-label">WhatsApp Number / व्हॉट्सॲप नंबर</label>
-            <input name="whatsappNumber" type="tel" className="form-input" placeholder="e.g. 9876543210" />
-          </div>
-          
-          <div className="form-group">
-            <label className="form-label">Marital Status / वैवाहिक स्थिती *</label>
-            <select name="maritalStatus" className="form-select" required>
-              <option value="">Select / निवडा</option>
-              <option value="Single">Single / अविवाहित</option>
-              <option value="Married">Married / विवाहित</option>
-              <option value="Divorced">Divorced / घटस्फोटीत</option>
-            </select>
-          </div>
-          
+        <h2 className="heading-2" style={{ marginBottom: "0.25rem", marginTop: "2.5rem", borderBottom: "1px solid var(--border)", paddingBottom: "0.5rem" }}>Physical & Educational Details</h2>
+        <p className="text-muted" style={{ marginBottom: "1.5rem", fontSize: "0.875rem" }}>शारीरिक आणि शैक्षणिक माहिती</p>
+
+        <div className="grid-2">
           <div className="form-group">
             <label className="form-label">Education / शिक्षण *</label>
             <input name="education" type="text" className="form-input" required placeholder="e.g. B.A." />
