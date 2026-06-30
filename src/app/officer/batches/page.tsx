@@ -3,6 +3,7 @@ import { prisma } from "@/lib/prisma";
 import { redirect } from "next/navigation";
 import { Calendar, Save, CheckCircle, XCircle } from "lucide-react";
 import { createBatch, toggleBatchStatus } from "@/app/actions";
+import DeleteBatchButton from "@/components/DeleteBatchButton";
 
 export default async function BatchesAdminPage() {
   const session = await getSession();
@@ -82,18 +83,21 @@ export default async function BatchesAdminPage() {
                   </div>
                 </div>
                 
-                <form action={async () => {
-                  "use server";
-                  await toggleBatchStatus(batch.id, batch.isActive);
-                }}>
-                  <button type="submit" className={`btn ${batch.isActive ? "btn-outline" : "btn-primary"}`} style={{ padding: "0.5rem 1rem" }}>
-                    {batch.isActive ? (
-                      <><XCircle size={16} /> Mark Completed</>
-                    ) : (
-                      <><CheckCircle size={16} /> Mark Active</>
-                    )}
-                  </button>
-                </form>
+                <div style={{ display: "flex", gap: "0.5rem" }}>
+                  <form action={async () => {
+                    "use server";
+                    await toggleBatchStatus(batch.id, batch.isActive);
+                  }}>
+                    <button type="submit" className={`btn ${batch.isActive ? "btn-outline" : "btn-primary"}`} style={{ padding: "0.5rem 1rem" }}>
+                      {batch.isActive ? (
+                        <><XCircle size={16} /> Mark Completed</>
+                      ) : (
+                        <><CheckCircle size={16} /> Mark Active</>
+                      )}
+                    </button>
+                  </form>
+                  <DeleteBatchButton batchId={batch.id} batchName={batch.name} />
+                </div>
               </div>
             ))
           )}

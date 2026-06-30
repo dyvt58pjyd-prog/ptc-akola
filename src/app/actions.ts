@@ -362,3 +362,29 @@ export async function toggleBatchStatus(batchId: string, isActive: boolean) {
     return { success: false, error: "Failed to update batch." };
   }
 }
+
+export async function deleteBatch(batchId: string) {
+  try {
+    const session = await getSession();
+    if (!session || (session.role !== "ADMIN" && session.role !== "OFFICER")) {
+      return { success: false, error: "Unauthorized" };
+    }
+
+    // First unassign all recruits from this batch so we don't delete the recruits or violate foreign keys
+    await prisma.recruit.updateMany({
+      where: { batchId: batchId },
+      data: { batchId: null }
+    });
+
+    await prisma.batch.delete({
+      where: { id: batchId }
+    });
+
+    revalidatePath("/admin/batches");
+    revalidatePath("/officer/batches");
+    return { success: true };
+  } catch (error) {
+    console.error("Failed to delete batch:", error);
+    return { success: false, error: "Failed to delete batch." };
+  }
+}
