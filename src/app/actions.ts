@@ -322,7 +322,7 @@ export async function createBatch(formData: FormData) {
   
   try {
     const session = await getSession();
-    if (!session || session.role !== "ADMIN") {
+    if (!session || (session.role !== "ADMIN" && session.role !== "OFFICER")) {
       return { success: false, error: "Unauthorized" };
     }
 
@@ -334,8 +334,8 @@ export async function createBatch(formData: FormData) {
         isActive: true,
       }
     });
-    
     revalidatePath("/admin/batches");
+    revalidatePath("/officer/batches");
     return { success: true };
   } catch (error) {
     console.error("Failed to create batch:", error);
@@ -346,7 +346,7 @@ export async function createBatch(formData: FormData) {
 export async function toggleBatchStatus(batchId: string, isActive: boolean) {
   try {
     const session = await getSession();
-    if (!session || session.role !== "ADMIN") {
+    if (!session || (session.role !== "ADMIN" && session.role !== "OFFICER")) {
       return { success: false, error: "Unauthorized" };
     }
 
@@ -354,8 +354,8 @@ export async function toggleBatchStatus(batchId: string, isActive: boolean) {
       where: { id: batchId },
       data: { isActive: !isActive }
     });
-    
     revalidatePath("/admin/batches");
+    revalidatePath("/officer/batches");
     return { success: true };
   } catch (error) {
     console.error("Failed to toggle batch status:", error);

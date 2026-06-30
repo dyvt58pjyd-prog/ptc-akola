@@ -102,6 +102,18 @@ export default async function OfficerDashboard() {
             </div>
           </div>
         </Link>
+        
+        <Link href="/officer/batches" style={{ textDecoration: "none", gridColumn: "1 / -1" }}>
+          <div className="glass-card action-card" style={{ display: "flex", alignItems: "center", gap: "1.5rem", padding: "1.5rem", transition: "all 0.3s ease" }}>
+            <div style={{ flexShrink: 0, display: "flex", alignItems: "center", justifyContent: "center", width: "60px", height: "60px", backgroundColor: "rgba(251, 191, 36, 0.1)", color: "var(--accent-gold)", borderRadius: "var(--radius-full)" }}>
+              <Target size={32} />
+            </div>
+            <div>
+              <h2 className="heading-2" style={{ marginBottom: "0.25rem", color: "white" }}>Manage Batches / बॅच व्यवस्थापन</h2>
+              <p className="text-muted" style={{ margin: 0, fontSize: "0.9rem" }}>Create and edit training batches / प्रशिक्षण बॅच तयार करा आणि संपादित करा</p>
+            </div>
+          </div>
+        </Link>
       </div>
 
       {/* Advanced Metrics Cards */}
