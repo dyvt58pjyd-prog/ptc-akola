@@ -157,7 +157,7 @@ export default function EditRecruitClient({ recruit, batches = [] }: { recruit: 
           
           <div className="form-group">
             <label className="form-label">Age / वय *</label>
-            <input name="age" type="number" min="18" max="40" className="form-input" required defaultValue={recruit.age} />
+            <input name="age" type="number" className="form-input" required defaultValue={recruit.age} />
           </div>
           
           <div className="form-group">

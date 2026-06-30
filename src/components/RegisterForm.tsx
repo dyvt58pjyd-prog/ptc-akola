@@ -140,7 +140,7 @@ export default function RegisterForm({ redirectUrl }: { redirectUrl: string }) {
           
           <div className="form-group">
             <label className="form-label">Age / वय *</label>
-            <input name="age" type="number" min="18" max="40" className="form-input" required placeholder="e.g. 24" />
+            <input name="age" type="number" className="form-input" required placeholder="e.g. 24" />
           </div>
           
           <div className="form-group">
