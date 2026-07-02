@@ -2,16 +2,26 @@
 
 import { useEffect, useState } from "react";
 import { Shield } from "lucide-react";
+import { usePathname } from "next/navigation";
 
 export default function SplashScreen() {
   const [showSplash, setShowSplash] = useState(true);
   const [fadeOut, setFadeOut] = useState(false);
+  const pathname = usePathname();
 
   useEffect(() => {
-    // Check if splash has already been shown in this session
-    const hasSeenSplash = sessionStorage.getItem("hasSeenSplash");
+    // Never show splash screen on report pages
+    if (pathname && pathname.includes("/report")) {
+      setShowSplash(false);
+      return;
+    }
+
+    // Check if splash has been seen recently (last 4 hours) using localStorage
+    // to prevent it showing again when opening links in new tabs
+    const lastSeen = localStorage.getItem("hasSeenSplashTime");
+    const now = Date.now();
     
-    if (hasSeenSplash) {
+    if (lastSeen && (now - parseInt(lastSeen) < 4 * 60 * 60 * 1000)) {
       setShowSplash(false);
       return;
     }
@@ -24,14 +34,14 @@ export default function SplashScreen() {
     // Set timeout to completely remove splash after 3 seconds
     const removeTimer = setTimeout(() => {
       setShowSplash(false);
-      sessionStorage.setItem("hasSeenSplash", "true");
+      localStorage.setItem("hasSeenSplashTime", now.toString());
     }, 3000);
 
     return () => {
       clearTimeout(fadeTimer);
       clearTimeout(removeTimer);
     };
-  }, []);
+  }, [pathname]);
 
   if (!showSplash) return null;
 
