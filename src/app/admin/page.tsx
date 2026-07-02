@@ -3,6 +3,7 @@ import { Users, ClipboardList, Target, CalendarOff, Activity } from "lucide-reac
 import DashboardCharts from "./DashboardCharts";
 import InteractiveRoster from "./InteractiveRoster";
 import RecentActivityFeed from "./RecentActivityFeed";
+import BackupManager from "@/components/BackupManager";
 
 export default async function AdminDashboard() {
   const recruits = await prisma.recruit.findMany({
@@ -86,18 +87,18 @@ export default async function AdminDashboard() {
       {/* Advanced Metrics Cards */}
       <div className="grid-2" style={{ gridTemplateColumns: "repeat(auto-fit, minmax(200px, 1fr))", marginBottom: "2rem" }}>
         <div className="glass-card" style={{ display: "flex", alignItems: "center", gap: "1rem", padding: "1.5rem" }}>
-          <div style={{ padding: "1rem", backgroundColor: "var(--primary-navy)", borderRadius: "var(--radius-full)", color: "white" }}>
+          <div className="icon-bg-neutral" style={{ padding: "1rem", borderRadius: "var(--radius-full)" }}>
             <Users size={24} />
           </div>
           <div>
-            <h3 style={{ fontSize: "1.75rem", fontWeight: "800" }}>{totalRecruits}</h3>
+            <h3 style={{ fontSize: "1.75rem", fontWeight: "800", color: "white" }}>{totalRecruits}</h3>
             <p className="text-muted" style={{ fontSize: "0.875rem", marginBottom: "0" }}>Total Recruits</p>
             <p className="text-muted" style={{ fontSize: "0.75rem", opacity: 0.8 }}>एकूण प्रशिक्षणार्थी</p>
           </div>
         </div>
         
         <div className="glass-card" style={{ display: "flex", alignItems: "center", gap: "1rem", padding: "1.5rem" }}>
-          <div style={{ padding: "1rem", backgroundColor: "rgba(34, 197, 94, 0.2)", borderRadius: "var(--radius-full)", color: "var(--success)" }}>
+          <div style={{ padding: "1rem", backgroundColor: "rgba(34, 197, 94, 0.1)", borderRadius: "var(--radius-full)", color: "var(--success)" }}>
             <Activity size={24} />
           </div>
           <div>
@@ -108,7 +109,7 @@ export default async function AdminDashboard() {
         </div>
 
         <div className="glass-card" style={{ display: "flex", alignItems: "center", gap: "1rem", padding: "1.5rem" }}>
-          <div style={{ padding: "1rem", backgroundColor: "rgba(239, 68, 68, 0.2)", borderRadius: "var(--radius-full)", color: "var(--error)" }}>
+          <div style={{ padding: "1rem", backgroundColor: "rgba(239, 68, 68, 0.1)", borderRadius: "var(--radius-full)", color: "var(--error)" }}>
             <CalendarOff size={24} />
           </div>
           <div>
@@ -119,17 +120,21 @@ export default async function AdminDashboard() {
         </div>
 
         <div className="glass-card" style={{ display: "flex", alignItems: "center", gap: "1rem", padding: "1.5rem" }}>
-          <div style={{ padding: "1rem", backgroundColor: "var(--accent-gold)", borderRadius: "var(--radius-full)", color: "#000" }}>
+          <div style={{ padding: "1rem", backgroundColor: "rgba(251, 191, 36, 0.1)", borderRadius: "var(--radius-full)", color: "var(--accent-gold)" }}>
             <Target size={24} />
           </div>
           <div>
-            <h3 style={{ fontSize: "1.75rem", fontWeight: "800" }}>{totalEvaluations}</h3>
+            <h3 style={{ fontSize: "1.75rem", fontWeight: "800", color: "white" }}>{totalEvaluations}</h3>
             <p className="text-muted" style={{ fontSize: "0.875rem", marginBottom: "0" }}>Evaluations</p>
             <p className="text-muted" style={{ fontSize: "0.75rem", opacity: 0.8 }}>एकूण मूल्यमापने</p>
           </div>
         </div>
       </div>
 
+      {/* Backup and Data Management */}
+      <BackupManager />
+
+      {/* Analytics and Activity Feed */}
       <div style={{ display: "grid", gridTemplateColumns: "2fr 1fr", gap: "2rem", marginBottom: "2rem" }}>
         <div style={{ minWidth: 0 }}>
           <DashboardCharts recruits={recruits} />
