@@ -3,6 +3,18 @@ import { notFound } from "next/navigation";
 import AutoPrint from "@/components/AutoPrint";
 import ManualPrintButton from "@/components/ManualPrintButton";
 
+export async function generateMetadata({ params }: { params: Promise<{ id: string }> }) {
+  const { id } = await params;
+  const recruit = await prisma.recruit.findUnique({ where: { id }, select: { name: true, chestNumber: true } });
+  if (!recruit) return { title: "Report Not Found" };
+  
+  // Clean up name for filename usage
+  const safeName = recruit.name.replace(/\s+/g, '_');
+  return {
+    title: `${safeName}_${recruit.chestNumber}`
+  };
+}
+
 export default async function RecruitReport({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
   
