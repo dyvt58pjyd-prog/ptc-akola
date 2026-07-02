@@ -6,9 +6,7 @@ export default async function EvaluatePage() {
   const session = await getSession();
   const officer = session ? await prisma.user.findUnique({ where: { id: session.userId } }) : null;
 
-  let recruits = await prisma.recruit.findMany({
-    orderBy: { name: "asc" }
-  });
+  let recruits = await prisma.recruit.findMany();
 
   // Filter recruits based on officer's assigned jurisdiction
   if (officer?.minChestNumber !== null && officer?.maxChestNumber !== null) {
@@ -18,6 +16,13 @@ export default async function EvaluatePage() {
       return chestNoInt >= officer!.minChestNumber! && chestNoInt <= officer!.maxChestNumber!;
     });
   }
+
+  recruits.sort((a, b) => {
+    const numA = parseInt(a.chestNumber.replace(/\D/g, '')) || 0;
+    const numB = parseInt(b.chestNumber.replace(/\D/g, '')) || 0;
+    if (numA !== numB) return numA - numB;
+    return a.chestNumber.localeCompare(b.chestNumber);
+  });
 
   return (
     <div>

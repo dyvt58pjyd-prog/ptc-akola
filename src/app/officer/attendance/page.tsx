@@ -26,6 +26,13 @@ export default async function AttendancePage() {
     recruits = await prisma.recruit.findMany({ orderBy: { chestNumber: "asc" } });
   }
 
+  recruits.sort((a, b) => {
+    const numA = parseInt(a.chestNumber.replace(/\D/g, '')) || 0;
+    const numB = parseInt(b.chestNumber.replace(/\D/g, '')) || 0;
+    if (numA !== numB) return numA - numB;
+    return a.chestNumber.localeCompare(b.chestNumber);
+  });
+
   return (
     <div style={{ maxWidth: "1200px", margin: "0 auto" }}>
       <h1 className="heading-1">Daily Attendance / दैनंदिन उपस्थिती</h1>

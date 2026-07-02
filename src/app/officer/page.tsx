@@ -7,11 +7,18 @@ import RecentActivityFeed from "../admin/RecentActivityFeed";
 
 export default async function OfficerDashboard() {
   const recruits = await prisma.recruit.findMany({
-    orderBy: { createdAt: "desc" },
+    orderBy: { chestNumber: "asc" },
     include: {
       evaluations: true,
       attendances: true
     }
+  });
+
+  recruits.sort((a, b) => {
+    const numA = parseInt(a.chestNumber.replace(/\D/g, '')) || 0;
+    const numB = parseInt(b.chestNumber.replace(/\D/g, '')) || 0;
+    if (numA !== numB) return numA - numB;
+    return a.chestNumber.localeCompare(b.chestNumber);
   });
 
   // Calculate top metrics
