@@ -24,6 +24,15 @@ export default async function DirectoryPage() {
     recruits = await prisma.recruit.findMany({ orderBy: { chestNumber: "asc" } });
   }
 
+  // Naturally sort the recruits by chest number (handling numerical values properly)
+  recruits.sort((a, b) => {
+    const numA = parseInt(a.chestNumber.replace(/\D/g, '')) || 0;
+    const numB = parseInt(b.chestNumber.replace(/\D/g, '')) || 0;
+    if (numA !== numB) return numA - numB;
+    return a.chestNumber.localeCompare(b.chestNumber);
+  });
+
+
   return (
     <div style={{ maxWidth: "1000px", margin: "0 auto" }}>
       <h1 className="heading-1">Recruit Directory / प्रशिक्षणार्थी यादी</h1>

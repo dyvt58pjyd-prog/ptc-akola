@@ -11,7 +11,12 @@ export default function InteractiveRoster({ recruits }: { recruits: any[] }) {
     r.chestNumber.toLowerCase().includes(searchTerm.toLowerCase()) || 
     r.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
     r.homeDistrict.toLowerCase().includes(searchTerm.toLowerCase())
-  );
+  ).sort((a, b) => {
+    const numA = parseInt(a.chestNumber.replace(/\D/g, '')) || 0;
+    const numB = parseInt(b.chestNumber.replace(/\D/g, '')) || 0;
+    if (numA !== numB) return numA - numB;
+    return a.chestNumber.localeCompare(b.chestNumber);
+  });
 
   return (
     <>
