@@ -14,7 +14,8 @@ export async function registerRecruit(formData: FormData) {
   const data = Object.fromEntries(formData.entries());
   
   try {
-    const chestNumber = data.chestNumber as string;
+    // Strip leading zeros from chest number, e.g. "01" -> "1"
+    const chestNumber = (data.chestNumber as string).replace(/^0+(?=\d)/, '');
     if (!data.photoUrl) {
       return { success: false, error: "Photo is required." };
     }
