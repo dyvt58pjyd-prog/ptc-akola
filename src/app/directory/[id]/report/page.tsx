@@ -62,6 +62,31 @@ export default async function RecruitReport({ params }: { params: Promise<{ id: 
   const attendancePercentage = totalSessions > 0 ? Math.round((presentSessions / totalSessions) * 100) : 100;
   const printDate = new Date().toLocaleString('en-GB');
 
+  // Helper for bilingual data values
+  const bilingualMap: Record<string, string> = {
+    "Male": "Male / पुरुष",
+    "Female": "Female / महिला",
+    "Other": "Other / इतर",
+    "Single": "Single / अविवाहित",
+    "Married": "Married / विवाहित",
+    "Divorced": "Divorced / घटस्फोटीत",
+    "Widowed": "Widowed / विधवा/विधुर",
+    "Direct": "Direct / थेट",
+    "Promoted": "Promoted / पदोन्नती",
+    "Compassionate": "Compassionate / अनुकंपा",
+    "Excellent": "Excellent / उत्कृष्ट",
+    "Good": "Good / चांगले",
+    "Average": "Average / सामान्य",
+    "Poor": "Poor / खराब",
+    "Yes": "Yes / होय",
+    "No": "No / नाही"
+  };
+
+  const b = (val: string | null | undefined) => {
+    if (!val) return "N/A / लागू नाही";
+    return bilingualMap[val] || val;
+  };
+
   return (
     <div className="report-wrapper">
       <AutoPrint />
@@ -273,11 +298,11 @@ export default async function RecruitReport({ params }: { params: Promise<{ id: 
           </div>
           <div className="data-item">
             <div className="data-label">लिंग / SEX</div>
-            <div className="data-value">{recruit.sex}</div>
+            <div className="data-value">{b(recruit.sex)}</div>
           </div>
           <div className="data-item">
             <div className="data-label">रक्तगट / BLOOD GROUP</div>
-            <div className="data-value">{recruit.bloodGroup || "N/A"}</div>
+            <div className="data-value">{recruit.bloodGroup || "N/A / लागू नाही"}</div>
           </div>
           <div className="data-item">
             <div className="data-label">मोबाईल क्रमांक / MOBILE NUMBER</div>
@@ -285,7 +310,7 @@ export default async function RecruitReport({ params }: { params: Promise<{ id: 
           </div>
           <div className="data-item">
             <div className="data-label">वैवाहिक स्थिती / MARITAL STATUS</div>
-            <div className="data-value">{recruit.maritalStatus}</div>
+            <div className="data-value">{b(recruit.maritalStatus)}</div>
           </div>
           <div className="data-item">
             <div className="data-label">घटक / UNIT</div>
@@ -294,20 +319,20 @@ export default async function RecruitReport({ params }: { params: Promise<{ id: 
           <div className="data-item">
             <div className="data-label">प्रशिक्षण बॅच / TRAINING BATCH</div>
             <div className="data-value">
-              {recruit.batch ? `${recruit.batch.name}\n(${new Date(recruit.batch.startDate).toLocaleDateString('en-GB')} - ${new Date(recruit.batch.endDate).toLocaleDateString('en-GB')})` : "Unassigned"}
+              {recruit.batch ? `${recruit.batch.name}\n(${new Date(recruit.batch.startDate).toLocaleDateString('en-GB')} - ${new Date(recruit.batch.endDate).toLocaleDateString('en-GB')})` : "Unassigned / नियुक्त नाही"}
             </div>
           </div>
           <div className="data-item" style={{ gridColumn: "span 2" }}>
             <div className="data-label">स्क्वाड क्रमांक / SQUAD NUMBER</div>
-            <div className="data-value">{recruit.squadNumber || "N/A"}</div>
+            <div className="data-value">{recruit.squadNumber || "N/A / लागू नाही"}</div>
           </div>
           <div className="data-item">
             <div className="data-label">नियुक्ती प्रवर्ग / APPT. CATEGORY</div>
-            <div className="data-value">{recruit.appointmentCategory || "N/A"}</div>
+            <div className="data-value">{recruit.appointmentCategory || "N/A / लागू नाही"}</div>
           </div>
           <div className="data-item">
             <div className="data-label">नियुक्ती प्रकार / APPT. TYPE</div>
-            <div className="data-value">{recruit.appointmentType || "N/A"}</div>
+            <div className="data-value">{b(recruit.appointmentType)}</div>
           </div>
         </div>
 
@@ -362,23 +387,23 @@ export default async function RecruitReport({ params }: { params: Promise<{ id: 
               <div className="data-grid grid-2">
                 <div className="data-item">
                   <div className="data-label">शारीरिक प्रशिक्षण / PHYSICAL TRAINING</div>
-                  <div className="data-value">{ev.physicalTraining}</div>
+                  <div className="data-value">{b(ev.physicalTraining)}</div>
                 </div>
                 <div className="data-item">
                   <div className="data-label">शस्त्र कवायत / WEAPON DRILL</div>
-                  <div className="data-value">{ev.weaponDrill}</div>
+                  <div className="data-value">{b(ev.weaponDrill)}</div>
                 </div>
                 <div className="data-item">
                   <div className="data-label">क्षेत्र कला / FIELD CRAFTS</div>
-                  <div className="data-value">{ev.fieldCrafts}</div>
+                  <div className="data-value">{b(ev.fieldCrafts)}</div>
                 </div>
                 <div className="data-item">
                   <div className="data-label">कवायत / DRILLS</div>
-                  <div className="data-value">{ev.drills}</div>
+                  <div className="data-value">{b(ev.drills)}</div>
                 </div>
                 <div className="data-item">
                   <div className="data-label">शस्त्र रणनीती / WEAPON TACTICS</div>
-                  <div className="data-value">{ev.weaponTactics}</div>
+                  <div className="data-value">{b(ev.weaponTactics)}</div>
                 </div>
                 <div className="data-item" style={{ gridColumn: "span 2", backgroundColor: "white", borderLeft: "4px solid var(--text-main)" }}>
                   <div className="data-label">एकूण अभिप्राय / OVERALL REMARKS</div>

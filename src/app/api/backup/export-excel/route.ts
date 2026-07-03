@@ -44,15 +44,33 @@ export async function GET() {
       { header: 'Photo', key: 'photo', width: 15 },
       { header: 'Chest No', key: 'chestNumber', width: 12 },
       { header: 'Name', key: 'name', width: 25 },
-      { header: 'Unit', key: 'unit', width: 20 },
-      { header: 'District', key: 'homeDistrict', width: 20 },
+      { header: 'Age', key: 'age', width: 10 },
       { header: 'Gender', key: 'sex', width: 10 },
       { header: 'Mobile', key: 'mobile', width: 15 },
+      { header: 'WhatsApp', key: 'whatsappNumber', width: 15 },
+      { header: 'Unit', key: 'unit', width: 20 },
       { header: 'Batch', key: 'batch', width: 15 },
+      { header: 'Squad No', key: 'squadNumber', width: 12 },
+      { header: 'District', key: 'homeDistrict', width: 20 },
+      { header: 'Taluka', key: 'taluka', width: 15 },
+      { header: 'Pincode', key: 'pincode', width: 12 },
+      { header: 'Address', key: 'address', width: 30 },
+      { header: 'Nearest Police Station', key: 'nearestPoliceStation', width: 20 },
+      { header: 'Education', key: 'education', width: 15 },
+      { header: 'Marital Status', key: 'maritalStatus', width: 15 },
+      { header: 'Blood Group', key: 'bloodGroup', width: 12 },
       { header: 'Height (cm)', key: 'height', width: 12 },
       { header: 'Weight (kg)', key: 'weight', width: 12 },
-      { header: 'Total Att.', key: 'attendance', width: 15 },
-      { header: 'Total Evals', key: 'evaluations', width: 12 },
+      { header: 'Religion', key: 'religion', width: 15 },
+      { header: 'Caste', key: 'caste', width: 15 },
+      { header: 'Category', key: 'category', width: 15 },
+      { header: 'Appt. Category', key: 'appointmentCategory', width: 20 },
+      { header: 'Appt. Type', key: 'appointmentType', width: 20 },
+      { header: 'Date of Entry', key: 'dateOfEntry', width: 15 },
+      { header: 'Returned to District?', key: 'isReturnedToDistrict', width: 18 },
+      { header: 'Returned Date', key: 'returnedToDistrictDate', width: 15 },
+      { header: 'Total Att. Sessions', key: 'attendance', width: 18 },
+      { header: 'Total Evals', key: 'evaluations', width: 15 },
     ];
 
     sheet.getRow(1).font = { bold: true };
@@ -67,13 +85,31 @@ export async function GET() {
 
       row.getCell('chestNumber').value = recruit.chestNumber;
       row.getCell('name').value = recruit.name;
-      row.getCell('unit').value = recruit.unit;
-      row.getCell('homeDistrict').value = recruit.homeDistrict;
+      row.getCell('age').value = recruit.age;
       row.getCell('sex').value = recruit.sex;
       row.getCell('mobile').value = recruit.mobile;
+      row.getCell('whatsappNumber').value = recruit.whatsappNumber || '';
+      row.getCell('unit').value = recruit.unit;
       row.getCell('batch').value = recruit.batch?.name || 'Unassigned';
+      row.getCell('squadNumber').value = recruit.squadNumber || '';
+      row.getCell('homeDistrict').value = recruit.homeDistrict;
+      row.getCell('taluka').value = recruit.taluka || '';
+      row.getCell('pincode').value = recruit.pincode || '';
+      row.getCell('address').value = recruit.address || '';
+      row.getCell('nearestPoliceStation').value = recruit.nearestPoliceStation || '';
+      row.getCell('education').value = recruit.education;
+      row.getCell('maritalStatus').value = recruit.maritalStatus;
+      row.getCell('bloodGroup').value = recruit.bloodGroup || '';
       row.getCell('height').value = recruit.height;
       row.getCell('weight').value = recruit.weight;
+      row.getCell('religion').value = recruit.religion || '';
+      row.getCell('caste').value = recruit.caste || '';
+      row.getCell('category').value = recruit.category || '';
+      row.getCell('appointmentCategory').value = recruit.appointmentCategory || '';
+      row.getCell('appointmentType').value = recruit.appointmentType || '';
+      row.getCell('dateOfEntry').value = recruit.dateOfEntry ? new Date(recruit.dateOfEntry).toLocaleDateString('en-GB') : '';
+      row.getCell('isReturnedToDistrict').value = recruit.isReturnedToDistrict ? 'Yes' : 'No';
+      row.getCell('returnedToDistrictDate').value = recruit.returnedToDistrictDate ? new Date(recruit.returnedToDistrictDate).toLocaleDateString('en-GB') : '';
       row.getCell('attendance').value = recruit.attendances.length * 2; // Morning & Afternoon
       row.getCell('evaluations').value = recruit.evaluations.length;
       
