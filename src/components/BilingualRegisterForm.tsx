@@ -38,9 +38,13 @@ export default function BilingualRegisterForm({ batches = [] }: { batches?: any[
     setError(null);
 
     const formData = new FormData(e.currentTarget);
-    if (photo) {
-      formData.append("photoUrl", photo);
+    if (!photo) {
+      setError("Passport Photo is compulsory. Please take a photo or upload one. / पासपोर्ट फोटो अनिवार्य आहे.");
+      setLoading(false);
+      return;
     }
+    
+    formData.append("photoUrl", photo);
 
     const result = await registerRecruit(formData);
     

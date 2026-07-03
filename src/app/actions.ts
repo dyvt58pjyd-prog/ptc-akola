@@ -14,36 +14,59 @@ export async function registerRecruit(formData: FormData) {
   const data = Object.fromEntries(formData.entries());
   
   try {
-    const recruit = await prisma.recruit.create({
-      data: {
-        name: toUpperCaseHelper(data.name as string) as string,
-        age: parseInt(data.age as string),
-        chestNumber: data.chestNumber as string,
-        unit: toUpperCaseHelper(data.unit as string) as string,
-        squadNumber: toUpperCaseHelper(data.squadNumber as string),
-        homeDistrict: data.homeDistrict as string,
-        mobile: data.mobile as string,
-        whatsappNumber: data.whatsappNumber ? (data.whatsappNumber as string) : null,
-        maritalStatus: data.maritalStatus as string,
-        education: toUpperCaseHelper(data.education as string) as string,
-        height: parseFloat(data.height as string),
-        weight: parseFloat(data.weight as string),
-        bloodGroup: data.bloodGroup ? (data.bloodGroup as string) : null,
-        sex: data.sex as string,
-        religion: data.religion ? (data.religion as string) : null,
-        caste: toUpperCaseHelper(data.caste as string),
-        category: data.category ? (data.category as string) : null,
-        address: toUpperCaseHelper(data.address as string),
-        taluka: toUpperCaseHelper(data.taluka as string),
-        pincode: data.pincode as string,
-        appointmentCategory: data.appointmentCategory ? (data.appointmentCategory as string) : null,
-        appointmentType: data.appointmentType ? (data.appointmentType as string) : null,
-        batchId: data.batchId ? (data.batchId as string) : null,
-        photoUrl: data.photoUrl ? (data.photoUrl as string) : null,
-        nearestPoliceStation: data.nearestPoliceStation ? toUpperCaseHelper(data.nearestPoliceStation as string) : null,
-        dateOfEntry: data.dateOfEntry ? new Date(data.dateOfEntry as string) : null,
-      }
+    const chestNumber = data.chestNumber as string;
+    if (!data.photoUrl) {
+      return { success: false, error: "Photo is required." };
+    }
+
+    const recruitData = {
+      name: toUpperCaseHelper(data.name as string) as string,
+      age: parseInt(data.age as string),
+      chestNumber: chestNumber,
+      unit: toUpperCaseHelper(data.unit as string) as string,
+      squadNumber: toUpperCaseHelper(data.squadNumber as string),
+      homeDistrict: data.homeDistrict as string,
+      mobile: data.mobile as string,
+      whatsappNumber: data.whatsappNumber ? (data.whatsappNumber as string) : null,
+      maritalStatus: data.maritalStatus as string,
+      education: toUpperCaseHelper(data.education as string) as string,
+      height: parseFloat(data.height as string),
+      weight: parseFloat(data.weight as string),
+      bloodGroup: data.bloodGroup ? (data.bloodGroup as string) : null,
+      sex: data.sex as string,
+      religion: data.religion ? (data.religion as string) : null,
+      caste: toUpperCaseHelper(data.caste as string),
+      category: data.category ? (data.category as string) : null,
+      address: toUpperCaseHelper(data.address as string),
+      taluka: toUpperCaseHelper(data.taluka as string),
+      pincode: data.pincode as string,
+      appointmentCategory: data.appointmentCategory ? (data.appointmentCategory as string) : null,
+      appointmentType: data.appointmentType ? (data.appointmentType as string) : null,
+      batchId: data.batchId ? (data.batchId as string) : null,
+      photoUrl: data.photoUrl as string,
+      nearestPoliceStation: data.nearestPoliceStation ? toUpperCaseHelper(data.nearestPoliceStation as string) : null,
+      dateOfEntry: data.dateOfEntry ? new Date(data.dateOfEntry as string) : null,
+    };
+
+    // Upsert logic: search by chestNumber
+    // Note: If multiple batches have the same chestNumber, this might conflict.
+    // In this app structure, we assume chestNumber is unique across current active recruits, 
+    // or they provide batchId during registration if necessary.
+    const existingRecruit = await prisma.recruit.findFirst({
+      where: { chestNumber: chestNumber }
     });
+
+    let recruit;
+    if (existingRecruit) {
+      recruit = await prisma.recruit.update({
+        where: { id: existingRecruit.id },
+        data: recruitData
+      });
+    } else {
+      recruit = await prisma.recruit.create({
+        data: recruitData
+      });
+    }
     
     revalidatePath("/admin");
     return { success: true, recruitId: recruit.id };
