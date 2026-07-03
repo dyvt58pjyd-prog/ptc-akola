@@ -309,9 +309,33 @@ export default async function RecruitReport({ params }: { params: Promise<{ id: 
             <div className="data-value">{recruit.mobile}</div>
           </div>
           <div className="data-item">
+            <div className="data-label">व्हॉट्सॲप क्र. / WHATSAPP NUMBER</div>
+            <div className="data-value">{recruit.whatsappNumber || "N/A / लागू नाही"}</div>
+          </div>
+          <div className="data-item">
             <div className="data-label">वैवाहिक स्थिती / MARITAL STATUS</div>
             <div className="data-value">{b(recruit.maritalStatus)}</div>
           </div>
+          <div className="data-item">
+            <div className="data-label">शिक्षण / EDUCATION</div>
+            <div className="data-value">{recruit.education || "N/A / लागू नाही"}</div>
+          </div>
+          <div className="data-item">
+            <div className="data-label">धर्म / RELIGION</div>
+            <div className="data-value">{recruit.religion || "N/A / लागू नाही"}</div>
+          </div>
+          <div className="data-item">
+            <div className="data-label">जात / CASTE</div>
+            <div className="data-value">{recruit.caste || "N/A / लागू नाही"}</div>
+          </div>
+          <div className="data-item">
+            <div className="data-label">प्रवर्ग / CATEGORY</div>
+            <div className="data-value">{recruit.category || "N/A / लागू नाही"}</div>
+          </div>
+        </div>
+
+        <div className="section-title">कार्यालयीन माहिती / OFFICIAL DETAILS</div>
+        <div className="data-grid grid-2">
           <div className="data-item">
             <div className="data-label">घटक / UNIT</div>
             <div className="data-value">{recruit.unit}</div>
@@ -334,6 +358,20 @@ export default async function RecruitReport({ params }: { params: Promise<{ id: 
             <div className="data-label">नियुक्ती प्रकार / APPT. TYPE</div>
             <div className="data-value">{b(recruit.appointmentType)}</div>
           </div>
+          <div className="data-item">
+            <div className="data-label">PTC मध्ये प्रवेश दिनांक / DATE OF ENTRY</div>
+            <div className="data-value">{recruit.dateOfEntry ? new Date(recruit.dateOfEntry).toLocaleDateString('en-GB') : "N/A / लागू नाही"}</div>
+          </div>
+          <div className="data-item">
+            <div className="data-label">घटकास परत केले? / RETURNED TO DISTRICT?</div>
+            <div className="data-value">{recruit.isReturnedToDistrict ? "Yes / होय" : "No / नाही"}</div>
+          </div>
+          {recruit.isReturnedToDistrict && (
+            <div className="data-item">
+              <div className="data-label">परत केल्याचा दिनांक / RETURNED DATE</div>
+              <div className="data-value">{recruit.returnedToDistrictDate ? new Date(recruit.returnedToDistrictDate).toLocaleDateString('en-GB') : "N/A / लागू नाही"}</div>
+            </div>
+          )}
         </div>
 
         {/* 3. Address & Contact */}
@@ -354,6 +392,10 @@ export default async function RecruitReport({ params }: { params: Promise<{ id: 
           <div className="data-item">
             <div className="data-label">पिनकोड / PINCODE</div>
             <div className="data-value">{recruit.pincode || "-"}</div>
+          </div>
+          <div className="data-item" style={{ gridColumn: "span 3" }}>
+            <div className="data-label">जवळचे पोलीस स्टेशन / NEAREST POLICE STATION</div>
+            <div className="data-value">{recruit.nearestPoliceStation || "N/A / लागू नाही"}</div>
           </div>
         </div>
 

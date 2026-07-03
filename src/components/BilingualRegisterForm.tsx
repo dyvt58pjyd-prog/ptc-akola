@@ -165,7 +165,7 @@ export default function BilingualRegisterForm({ batches = [] }: { batches?: any[
           <div className="form-group" style={{ gridColumn: "1 / -1", backgroundColor: "rgba(255,255,255,0.05)", padding: "1.5rem", borderRadius: "var(--radius-md)", border: "1px solid var(--border)" }}>
             <label className="form-label" style={{ fontSize: "1.1rem" }}>Training Batch / प्रशिक्षण बॅच</label>
             <p className="text-muted" style={{ fontSize: "0.875rem", marginBottom: "1rem" }}>Assign this recruit to an active training batch.</p>
-            <select name="batchId" className="form-select" style={{ borderColor: "var(--accent-gold)" }}>
+            <select name="batchId" className="form-select" style={{ borderColor: "var(--accent-gold)" }} defaultValue={batches.length === 1 ? batches[0].id : ""}>
               <option value="">No Batch Assigned / कोणतीही बॅच नाही</option>
               {batches.map(b => (
                 <option key={b.id} value={b.id}>{b.name} ({new Date(b.startDate).toLocaleDateString('en-GB')} - {new Date(b.endDate).toLocaleDateString('en-GB')})</option>
