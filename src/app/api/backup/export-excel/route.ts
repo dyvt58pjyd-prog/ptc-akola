@@ -2,6 +2,8 @@ import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { getSession } from "@/lib/auth";
 import ExcelJS from "exceljs";
+import fs from "fs";
+import path from "path";
 
 export async function GET() {
   const session = await getSession();
@@ -39,49 +41,109 @@ export async function GET() {
       pageSetup: { fitToPage: true, fitToHeight: 1, fitToWidth: 1 }
     });
 
-    // Columns
+    // Define columns (without headers yet)
     sheet.columns = [
-      { header: 'Photo', key: 'photo', width: 15 },
-      { header: 'Chest No', key: 'chestNumber', width: 12 },
-      { header: 'Name', key: 'name', width: 25 },
-      { header: 'Age', key: 'age', width: 10 },
-      { header: 'Gender', key: 'sex', width: 10 },
-      { header: 'Mobile', key: 'mobile', width: 15 },
-      { header: 'WhatsApp', key: 'whatsappNumber', width: 15 },
-      { header: 'Unit', key: 'unit', width: 20 },
-      { header: 'Batch', key: 'batch', width: 15 },
-      { header: 'Squad No', key: 'squadNumber', width: 12 },
-      { header: 'District', key: 'homeDistrict', width: 20 },
-      { header: 'Taluka', key: 'taluka', width: 15 },
-      { header: 'Pincode', key: 'pincode', width: 12 },
-      { header: 'Address', key: 'address', width: 30 },
-      { header: 'Nearest Police Station', key: 'nearestPoliceStation', width: 20 },
-      { header: 'Education', key: 'education', width: 15 },
-      { header: 'Marital Status', key: 'maritalStatus', width: 15 },
-      { header: 'Blood Group', key: 'bloodGroup', width: 12 },
-      { header: 'Height (cm)', key: 'height', width: 12 },
-      { header: 'Weight (kg)', key: 'weight', width: 12 },
-      { header: 'Religion', key: 'religion', width: 15 },
-      { header: 'Caste', key: 'caste', width: 15 },
-      { header: 'Category', key: 'category', width: 15 },
-      { header: 'Appt. Category', key: 'appointmentCategory', width: 20 },
-      { header: 'Appt. Type', key: 'appointmentType', width: 20 },
-      { header: 'Date of Entry', key: 'dateOfEntry', width: 15 },
-      { header: 'Returned to District?', key: 'isReturnedToDistrict', width: 18 },
-      { header: 'Returned Date', key: 'returnedToDistrictDate', width: 15 },
-      { header: 'Total Att. Sessions', key: 'attendance', width: 18 },
-      { header: 'Total Evals', key: 'evaluations', width: 15 },
+      { key: 'photo', width: 15 },
+      { key: 'chestNumber', width: 12 },
+      { key: 'name', width: 25 },
+      { key: 'age', width: 10 },
+      { key: 'sex', width: 10 },
+      { key: 'mobile', width: 15 },
+      { key: 'whatsappNumber', width: 15 },
+      { key: 'unit', width: 20 },
+      { key: 'batch', width: 15 },
+      { key: 'squadNumber', width: 12 },
+      { key: 'homeDistrict', width: 20 },
+      { key: 'taluka', width: 15 },
+      { key: 'pincode', width: 12 },
+      { key: 'address', width: 30 },
+      { key: 'nearestPoliceStation', width: 20 },
+      { key: 'education', width: 15 },
+      { key: 'maritalStatus', width: 15 },
+      { key: 'bloodGroup', width: 12 },
+      { key: 'height', width: 12 },
+      { key: 'weight', width: 12 },
+      { key: 'religion', width: 15 },
+      { key: 'caste', width: 15 },
+      { key: 'category', width: 15 },
+      { key: 'appointmentCategory', width: 20 },
+      { key: 'appointmentType', width: 20 },
+      { key: 'dateOfEntry', width: 15 },
+      { key: 'isReturnedToDistrict', width: 18 },
+      { key: 'returnedToDistrictDate', width: 15 },
+      { key: 'attendance', width: 18 },
+      { key: 'evaluations', width: 15 },
     ];
 
-    sheet.getRow(1).font = { bold: true };
-    sheet.getRow(1).alignment = { vertical: 'middle', horizontal: 'center' };
+    // Build the big header
+    sheet.mergeCells('A1:A4'); // For Logo
+    sheet.mergeCells('B1:AD4'); // For Title
 
+    // Add Logo
+    try {
+      const logoPath = path.join(process.cwd(), 'public', 'logo.png');
+      if (fs.existsSync(logoPath)) {
+        const logoBuffer = fs.readFileSync(logoPath);
+        const logoId = workbook.addImage({
+          base64: logoBuffer.toString('base64'),
+          extension: 'png',
+        });
+        sheet.addImage(logoId, {
+          tl: { col: 0.1, row: 0.1 },
+          ext: { width: 80, height: 80 },
+          editAs: 'oneCell'
+        });
+      }
+    } catch (e) {
+      console.error("Failed to load logo", e);
+    }
+
+    const titleCell = sheet.getCell('B1');
+    titleCell.value = 'POLICE TRAINING CENTRE AKOLA\nRecruits Data Report';
+    titleCell.font = { name: 'Arial', size: 24, bold: true, color: { argb: 'FF0F172A' } };
+    titleCell.alignment = { vertical: 'middle', horizontal: 'center', wrapText: true };
+    
+    // Add border to the header box
+    const titleBorder = { style: 'thick' as ExcelJS.BorderStyle };
+    sheet.getCell('A1').border = { top: titleBorder, left: titleBorder, bottom: titleBorder };
+    titleCell.border = { top: titleBorder, right: titleBorder, bottom: titleBorder };
+
+    // Setup headers on Row 5
+    const headers = [
+      'Photo', 'Chest No', 'Name', 'Age', 'Gender', 'Mobile', 'WhatsApp', 'Unit', 'Batch', 'Squad No', 
+      'District', 'Taluka', 'Pincode', 'Address', 'Nearest Police Station', 'Education', 'Marital Status', 
+      'Blood Group', 'Height (cm)', 'Weight (kg)', 'Religion', 'Caste', 'Category', 'Appt. Category', 
+      'Appt. Type', 'Date of Entry', 'Returned to District?', 'Returned Date', 'Total Att. Sessions', 'Total Evals'
+    ];
+    
+    const headerRow = sheet.getRow(5);
+    headerRow.values = headers;
+    headerRow.height = 35;
+    
+    for (let i = 1; i <= 30; i++) {
+      const cell = headerRow.getCell(i);
+      cell.font = { bold: true, color: { argb: 'FFFFFFFF' } };
+      cell.alignment = { vertical: 'middle', horizontal: 'center', wrapText: true };
+      cell.fill = {
+        type: 'pattern',
+        pattern: 'solid',
+        fgColor: { argb: 'FF1E293B' } // Slate 800
+      };
+      cell.border = {
+        top: { style: 'thin' },
+        left: { style: 'thin' },
+        bottom: { style: 'thin' },
+        right: { style: 'thin' }
+      };
+    }
+
+    // Data rows
     for (let i = 0; i < recruits.length; i++) {
       const recruit = recruits[i];
-      const rowNumber = i + 2; // Data starts at row 2
+      const rowNumber = i + 6; // Data starts at row 6
       
       const row = sheet.getRow(rowNumber);
-      row.height = 75; // Set row height to accommodate photo
+      row.height = 80; // Set row height to accommodate photo
 
       row.getCell('chestNumber').value = recruit.chestNumber;
       row.getCell('name').value = recruit.name;
@@ -113,9 +175,6 @@ export async function GET() {
       row.getCell('attendance').value = recruit.attendances.length * 2; // Morning & Afternoon
       row.getCell('evaluations').value = recruit.evaluations.length;
       
-      // Vertical align all cells
-      row.alignment = { vertical: 'middle' };
-
       // Handle photo
       if (recruit.photoUrl && recruit.photoUrl.startsWith('data:image')) {
         try {
@@ -130,17 +189,27 @@ export async function GET() {
               extension: ext as 'jpeg' | 'png' | 'gif',
             });
 
-            // Add image to the specific cell (0-indexed for col/row internally in some methods, but tl uses 0-based float)
-            // Column A is index 0
             sheet.addImage(imageId, {
               tl: { col: 0.1, row: rowNumber - 1 + 0.1 },
-              ext: { width: 80, height: 90 }, // size of image in pixels
+              ext: { width: 80, height: 90 }, 
               editAs: 'oneCell'
             });
           }
         } catch (e) {
           console.error(`Failed to process photo for recruit ${recruit.chestNumber}`, e);
         }
+      }
+
+      // Vertical align all cells and apply perfect borders
+      for (let c = 1; c <= 30; c++) {
+        const cell = row.getCell(c);
+        cell.alignment = { vertical: 'middle', horizontal: 'center', wrapText: true };
+        cell.border = {
+          top: { style: 'thin' },
+          left: { style: 'thin' },
+          bottom: { style: 'thin' },
+          right: { style: 'thin' }
+        };
       }
     }
 
