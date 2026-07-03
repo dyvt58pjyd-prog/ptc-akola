@@ -126,6 +126,7 @@ export default async function RecruitReport({ params }: { params: Promise<{ id: 
           font-family: 'Arial', sans-serif;
           color: var(--text-main);
           line-height: 1.4;
+          border: 4px double #000;
         }
 
         @media print {
@@ -141,7 +142,7 @@ export default async function RecruitReport({ params }: { params: Promise<{ id: 
           }
           .print-hidden { display: none !important; }
           .report-wrapper { padding: 0 !important; background: white !important; min-height: auto !important; }
-          .a4-page { box-shadow: none !important; margin: 0 auto !important; padding: 10mm !important; }
+          .a4-page { box-shadow: none !important; margin: 0 auto !important; padding: 10mm !important; border: 4px double #000 !important; min-height: 290mm; }
           
           /* Prevent awkward breaks */
           .data-grid { page-break-inside: avoid; break-inside: avoid; }
