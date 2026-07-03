@@ -268,7 +268,7 @@ export default async function RecruitReport({ params }: { params: Promise<{ id: 
           <img src="/logo.png" alt="Logo" style={{ width: "90px" }} />
           
           <div className="header-center">
-            <div className="header-title">महाराष्ट्र पोलीस प्रशिक्षण केंद्र <br/> MAHARASHTRA POLICE</div>
+            <div className="header-title" style={{ fontSize: "24px" }}>पोलीस प्रशिक्षण केंद्र, अकोला <br/> POLICE TRAINING CENTRE, AKOLA</div>
             <div className="header-subtitle">प्रशिक्षणार्थी माहिती पत्रक / RECRUIT DETAILED REPORT</div>
           </div>
 
