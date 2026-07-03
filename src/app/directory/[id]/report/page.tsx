@@ -94,9 +94,9 @@ export default async function RecruitReport({ params }: { params: Promise<{ id: 
 
       <style dangerouslySetInnerHTML={{__html: `
         :root {
-          --border-color: #e5e7eb;
-          --text-muted: #6b7280;
-          --text-main: #111827;
+          --border-color: #000000;
+          --text-muted: #333333;
+          --text-main: #000000;
         }
 
         /* OVERRIDE APP LAYOUT FOR FULLSCREEN REPORT */
@@ -123,23 +123,23 @@ export default async function RecruitReport({ params }: { params: Promise<{ id: 
           background: white;
           padding: 20mm;
           box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1);
-          font-family: 'Inter', Arial, sans-serif;
+          font-family: 'Arial', sans-serif;
           color: var(--text-main);
-          line-height: 1.5;
+          line-height: 1.4;
         }
 
         @media print {
           .print-hidden { display: none !important; }
           .report-wrapper { padding: 0 !important; background: white !important; }
-          .a4-page { box-shadow: none !important; margin: 0 auto !important; }
+          .a4-page { box-shadow: none !important; margin: 0 auto !important; padding: 10mm !important; }
         }
 
         .header-flex {
           display: flex;
           justify-content: space-between;
           align-items: flex-start;
-          margin-bottom: 40px;
-          border-bottom: 2px solid var(--border-color);
+          margin-bottom: 20px;
+          border-bottom: 3px double var(--border-color);
           padding-bottom: 20px;
         }
 
@@ -151,46 +151,52 @@ export default async function RecruitReport({ params }: { params: Promise<{ id: 
 
         .header-title {
           font-size: 22px;
-          font-weight: 800;
+          font-weight: bold;
           margin-bottom: 8px;
           text-transform: uppercase;
           letter-spacing: 0.5px;
         }
 
         .header-subtitle {
-          font-size: 14px;
-          color: var(--text-muted);
-          font-weight: 600;
+          font-size: 16px;
+          color: var(--text-main);
+          font-weight: bold;
+          text-decoration: underline;
         }
 
         .photo-box {
-          width: 110px;
-          height: 140px;
+          width: 120px;
+          height: 150px;
           border: 2px solid var(--text-main);
-          background-color: #f9fafb;
+          background-color: #fff;
           display: flex;
           align-items: center;
           justify-content: center;
-          font-size: 10px;
+          font-size: 12px;
           color: var(--text-muted);
           text-align: center;
+          padding: 2px;
         }
 
         .section-title {
           font-size: 14px;
-          font-weight: 700;
-          color: var(--text-main);
-          background-color: transparent;
-          padding: 8px 0;
-          margin: 30px 0 15px 0;
+          font-weight: bold;
+          color: #fff;
+          background-color: #000;
+          padding: 6px 12px;
+          margin: 20px 0 0 0;
           text-transform: uppercase;
-          border-bottom: 2px solid var(--text-main);
+          border: 1px solid #000;
         }
 
         .data-grid {
           display: grid;
-          gap: 20px;
+          gap: 0;
           margin-bottom: 20px;
+          border-top: none;
+          border-left: 1px solid var(--border-color);
+          border-right: 1px solid var(--border-color);
+          border-bottom: 1px solid var(--border-color);
         }
 
         .grid-2 { grid-template-columns: 1fr 1fr; }
@@ -200,21 +206,22 @@ export default async function RecruitReport({ params }: { params: Promise<{ id: 
         .data-item {
           background-color: transparent;
           border: 1px solid var(--border-color);
-          border-radius: 6px;
-          padding: 15px;
+          border-radius: 0;
+          padding: 8px 12px;
+          margin: -1px 0 0 -1px;
         }
 
         .data-label {
           font-size: 11px;
           color: var(--text-muted);
-          margin-bottom: 6px;
+          margin-bottom: 4px;
           text-transform: uppercase;
-          letter-spacing: 0.5px;
+          font-weight: bold;
         }
 
         .data-value {
-          font-size: 14px;
-          font-weight: 600;
+          font-size: 13px;
+          font-weight: bold;
           color: var(--text-main);
           word-break: break-word;
           overflow-wrap: break-word;
@@ -223,31 +230,26 @@ export default async function RecruitReport({ params }: { params: Promise<{ id: 
 
         .clean-table {
           width: 100%;
-          border-collapse: separate;
-          border-spacing: 0;
+          border-collapse: collapse;
           border: 1px solid var(--border-color);
-          border-radius: 6px;
-          overflow: hidden;
-          margin-top: 10px;
+          margin-top: 0;
+          margin-bottom: 20px;
         }
 
         .clean-table th, .clean-table td {
-          padding: 12px 15px;
-          border-bottom: 1px solid var(--border-color);
-          border-right: 1px solid var(--border-color);
+          padding: 8px 12px;
+          border: 1px solid var(--border-color);
           text-align: left;
-          font-size: 13px;
+          font-size: 12px;
         }
 
         .clean-table th {
-          background-color: transparent;
-          font-weight: 600;
+          background-color: #f0f0f0;
+          font-weight: bold;
           color: var(--text-main);
           text-transform: uppercase;
           font-size: 11px;
         }
-
-        .clean-table tr:last-child td { border-bottom: none; }
         .clean-table th:last-child, .clean-table td:last-child { border-right: none; }
 
         .footer {
