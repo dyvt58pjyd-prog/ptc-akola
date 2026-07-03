@@ -129,9 +129,25 @@ export default async function RecruitReport({ params }: { params: Promise<{ id: 
         }
 
         @media print {
+          html, body { 
+            background-color: white !important; 
+            color: black !important;
+            height: auto !important;
+            min-height: auto !important;
+          }
+          * {
+            -webkit-print-color-adjust: exact !important;
+            print-color-adjust: exact !important;
+          }
           .print-hidden { display: none !important; }
-          .report-wrapper { padding: 0 !important; background: white !important; }
+          .report-wrapper { padding: 0 !important; background: white !important; min-height: auto !important; }
           .a4-page { box-shadow: none !important; margin: 0 auto !important; padding: 10mm !important; }
+          
+          /* Prevent awkward breaks */
+          .data-grid { page-break-inside: avoid; break-inside: avoid; }
+          .section-title { page-break-after: avoid; break-after: avoid; page-break-inside: avoid; break-inside: avoid; }
+          .clean-table { page-break-inside: auto; }
+          .clean-table tr { page-break-inside: avoid; break-inside: avoid; }
         }
 
         .header-flex {
