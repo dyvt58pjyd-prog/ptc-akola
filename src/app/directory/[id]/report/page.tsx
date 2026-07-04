@@ -315,8 +315,8 @@ export default async function RecruitReport({ params }: { params: Promise<{ id: 
         <div className="section-title">वैयक्तिक माहिती / PERSONAL INFORMATION</div>
         <div className="data-grid grid-2">
           <div className="data-item">
-            <div className="data-label">छाती क्रमांक / CHEST NUMBER</div>
-            <div className="data-value">#{recruit.chestNumber}</div>
+            <div className="data-label">छाती क्र. आणि पथक / CHEST NO & SQUAD</div>
+            <div className="data-value">#{recruit.chestNumber} {recruit.squadNumber ? `(Squad: ${recruit.squadNumber})` : ""}</div>
           </div>
           <div className="data-item">
             <div className="data-label">पूर्ण नाव / FULL NAME</div>

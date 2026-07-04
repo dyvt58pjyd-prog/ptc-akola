@@ -6,13 +6,13 @@ import { Activity, MapPin } from "lucide-react";
 const COLORS = ['#0f172a', '#eab308', '#22c55e', '#ef4444', '#64748b'];
 
 export default function DashboardCharts({ recruits }: { recruits: any[] }) {
-  // Aggregate data for District Chart
-  const districtCounts: Record<string, number> = {};
+  // Aggregate data for Unit Chart
+  const unitCounts: Record<string, number> = {};
   let totalPresent = 0;
   let totalAbsent = 0;
 
   recruits.forEach(r => {
-    districtCounts[r.homeDistrict] = (districtCounts[r.homeDistrict] || 0) + 1;
+    unitCounts[r.unit] = (unitCounts[r.unit] || 0) + 1;
     
     r.attendances?.forEach((a: any) => {
       if (a.morningStatus === "PRESENT") totalPresent++;
@@ -23,7 +23,7 @@ export default function DashboardCharts({ recruits }: { recruits: any[] }) {
     });
   });
 
-  const districtData = Object.keys(districtCounts).map(d => ({ name: d, count: districtCounts[d] }));
+  const unitData = Object.keys(unitCounts).map(d => ({ name: d, count: unitCounts[d] }));
   const attendanceData = [
     { name: 'Present', value: totalPresent },
     { name: 'Absent', value: totalAbsent }
@@ -34,12 +34,12 @@ export default function DashboardCharts({ recruits }: { recruits: any[] }) {
       <div className="glass-card" style={{ padding: "1.5rem" }}>
         <h3 className="heading-2" style={{ display: "flex", alignItems: "center", gap: "0.5rem", fontSize: "1.25rem" }}>
           <MapPin size={20} color="var(--primary-navy)" />
-          Recruits by District
+          Recruits by Unit
         </h3>
-        {districtData.length > 0 ? (
+        {unitData.length > 0 ? (
           <div style={{ width: "100%", height: 300 }}>
             <ResponsiveContainer>
-              <BarChart data={districtData} margin={{ top: 20, right: 30, left: 0, bottom: 5 }}>
+              <BarChart data={unitData} margin={{ top: 20, right: 30, left: 0, bottom: 5 }}>
                 <XAxis dataKey="name" stroke="var(--text-muted)" fontSize={12} />
                 <YAxis stroke="var(--text-muted)" fontSize={12} allowDecimals={false} />
                 <Tooltip cursor={{ fill: 'rgba(15, 23, 42, 0.05)' }} contentStyle={{ borderRadius: '8px', border: 'none', boxShadow: 'var(--shadow-md)' }} />
