@@ -12,7 +12,7 @@ export default function ManualPrintButton({ filename = "report.pdf" }: { filenam
       const element = document.getElementById('report-content');
       
       if (element) {
-        const opt = {
+        const opt: any = {
           margin:       10,
           filename:     filename,
           image:        { type: 'jpeg', quality: 0.98 },
