@@ -3,7 +3,7 @@
 import { useState, useRef } from "react";
 import { Download, Upload, FileJson, FileSpreadsheet, AlertTriangle, CheckCircle } from "lucide-react";
 
-export default function BackupManager() {
+export default function BackupManager({ role = "ADMIN" }: { role?: "ADMIN" | "OFFICER" }) {
   const [isExportingJson, setIsExportingJson] = useState(false);
   const [isExportingExcel, setIsExportingExcel] = useState(false);
   const [isRestoring, setIsRestoring] = useState(false);
@@ -121,7 +121,7 @@ export default function BackupManager() {
   return (
     <div className="glass-card" style={{ padding: "2rem", marginBottom: "2rem", backgroundColor: "rgba(15, 23, 42, 0.6)" }}>
       <h2 className="heading-2" style={{ marginBottom: "1.5rem", display: "flex", alignItems: "center", gap: "0.75rem" }}>
-        Data Management & Backups
+        {role === "ADMIN" ? "Data Management & Backups" : "Export Reports"}
       </h2>
       
       {statusMessage && (
@@ -151,7 +151,8 @@ export default function BackupManager() {
 
       <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(300px, 1fr))", gap: "1.5rem" }}>
         
-        {/* Export JSON */}
+        {/* Export JSON (Admin Only) */}
+        {role === "ADMIN" && (
         <div style={{ padding: "1.5rem", backgroundColor: "rgba(255,255,255,0.03)", borderRadius: "var(--radius-md)", border: "1px solid rgba(255,255,255,0.05)" }}>
           <div style={{ display: "flex", alignItems: "center", gap: "1rem", marginBottom: "1rem" }}>
             <div style={{ padding: "0.75rem", backgroundColor: "rgba(59, 130, 246, 0.1)", color: "var(--accent-blue)", borderRadius: "var(--radius-md)" }}>
@@ -171,6 +172,7 @@ export default function BackupManager() {
             {isExportingJson ? "Generating..." : <><Download size={18} /> Download Backup</>}
           </button>
         </div>
+        )}
 
         {/* Export Excel */}
         <div style={{ padding: "1.5rem", backgroundColor: "rgba(255,255,255,0.03)", borderRadius: "var(--radius-md)", border: "1px solid rgba(255,255,255,0.05)" }}>
@@ -193,7 +195,8 @@ export default function BackupManager() {
           </button>
         </div>
 
-        {/* Import Backup */}
+        {/* Import Backup (Admin Only) */}
+        {role === "ADMIN" && (
         <div style={{ padding: "1.5rem", backgroundColor: "rgba(255,255,255,0.03)", borderRadius: "var(--radius-md)", border: "1px solid rgba(255,255,255,0.05)" }}>
           <div style={{ display: "flex", alignItems: "center", gap: "1rem", marginBottom: "1rem" }}>
             <div style={{ padding: "0.75rem", backgroundColor: "rgba(234, 179, 8, 0.1)", color: "var(--accent-gold)", borderRadius: "var(--radius-md)" }}>
@@ -220,6 +223,7 @@ export default function BackupManager() {
             {isRestoring ? "Restoring..." : <><Upload size={18} /> Upload Backup File</>}
           </button>
         </div>
+        )}
 
       </div>
     </div>

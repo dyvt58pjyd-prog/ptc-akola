@@ -4,6 +4,7 @@ import { UserPlus, ClipboardCheck, Users, Target, CalendarOff, Activity } from "
 import DashboardCharts from "../admin/DashboardCharts";
 import InteractiveRoster from "../admin/InteractiveRoster";
 import RecentActivityFeed from "../admin/RecentActivityFeed";
+import BackupManager from "@/components/BackupManager";
 
 export default async function OfficerDashboard() {
   const recruits = await prisma.recruit.findMany({
@@ -179,6 +180,9 @@ export default async function OfficerDashboard() {
           <RecentActivityFeed activities={recentActivities} />
         </div>
       </div>
+
+      {/* Export Section */}
+      <BackupManager role="OFFICER" />
 
       {/* Roster */}
       <InteractiveRoster recruits={recruits} />

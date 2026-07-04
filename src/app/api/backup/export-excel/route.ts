@@ -8,7 +8,7 @@ import path from "path";
 export async function GET() {
   const session = await getSession();
   
-  if (!session || session.role !== "ADMIN") {
+  if (!session || (session.role !== "ADMIN" && session.role !== "OFFICER")) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
