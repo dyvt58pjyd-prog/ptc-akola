@@ -98,10 +98,13 @@ export default async function RecruitReport({ params }: { params: Promise<{ id: 
     return bilingualMap[val] || val;
   };
 
+  const safeName = recruit.name.replace(/\s+/g, '_');
+  const pdfFilename = `${safeName}_${recruit.chestNumber}.pdf`;
+
   return (
     <div className="report-wrapper">
-      <AutoPrint />
-      <ManualPrintButton />
+      <AutoPrint filename={pdfFilename} />
+      <ManualPrintButton filename={pdfFilename} />
 
       <style dangerouslySetInnerHTML={{__html: `
         :root {
@@ -291,7 +294,7 @@ export default async function RecruitReport({ params }: { params: Promise<{ id: 
         }
       `}} />
 
-      <div className="a4-page">
+      <div className="a4-page" id="report-content">
         
         {/* 1. Clean Flex Header */}
         <div className="header-flex">
