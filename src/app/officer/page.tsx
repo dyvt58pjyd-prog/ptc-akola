@@ -5,8 +5,12 @@ import DashboardCharts from "../admin/DashboardCharts";
 import InteractiveRoster from "../admin/InteractiveRoster";
 import RecentActivityFeed from "../admin/RecentActivityFeed";
 import BackupManager from "@/components/BackupManager";
+import { getSession } from "@/lib/auth";
 
 export default async function OfficerDashboard() {
+  const session = await getSession();
+  const officerUser = session ? await prisma.user.findUnique({ where: { id: session.userId } }) : null;
+
   const recruits = await prisma.recruit.findMany({
     orderBy: { chestNumber: "asc" },
     include: {
@@ -77,6 +81,24 @@ export default async function OfficerDashboard() {
   const recentActivities = activities.slice(0, 5);
 
   const overallAttendanceRate = totalSessions > 0 ? Math.round((presentSessions / totalSessions) * 100) : 0;
+
+  // Calculate missing enrollments
+  const missingChestNumbers: number[] = [];
+  if (officerUser && officerUser.minChestNumber && officerUser.maxChestNumber) {
+    const min = officerUser.minChestNumber;
+    const max = officerUser.maxChestNumber;
+    
+    // Get a set of enrolled numbers (handling numeric chest numbers)
+    const enrolledNumbers = new Set(
+      recruits.map(r => parseInt(r.chestNumber.replace(/\D/g, ''))).filter(n => !isNaN(n))
+    );
+
+    for (let i = min; i <= max; i++) {
+      if (!enrolledNumbers.has(i)) {
+        missingChestNumbers.push(i);
+      }
+    }
+  }
 
   return (
     <div>
@@ -180,6 +202,32 @@ export default async function OfficerDashboard() {
           <RecentActivityFeed activities={recentActivities} />
         </div>
       </div>
+      {/* Missing Enrollments Section */}
+      {missingChestNumbers.length > 0 && (
+        <div className="glass-card" style={{ padding: "2rem", marginBottom: "2rem", backgroundColor: "rgba(239, 68, 68, 0.05)", border: "1px solid rgba(239, 68, 68, 0.2)" }}>
+          <h2 className="heading-2" style={{ marginBottom: "1rem", color: "var(--error)", display: "flex", alignItems: "center", gap: "0.5rem" }}>
+            <Target size={24} /> Missing Enrollments / प्रलंबित नोंदणी
+          </h2>
+          <p className="text-muted" style={{ marginBottom: "1.5rem" }}>
+            The following chest numbers from your allotted range ({officerUser?.minChestNumber} - {officerUser?.maxChestNumber}) have not been enrolled yet:
+          </p>
+          <div style={{ display: "flex", flexWrap: "wrap", gap: "0.5rem" }}>
+            {missingChestNumbers.map(num => (
+              <span key={num} style={{
+                display: "inline-block",
+                padding: "0.4rem 0.8rem",
+                backgroundColor: "rgba(239, 68, 68, 0.1)",
+                color: "var(--error)",
+                borderRadius: "var(--radius-md)",
+                fontWeight: "bold",
+                fontSize: "0.9rem"
+              }}>
+                {num}
+              </span>
+            ))}
+          </div>
+        </div>
+      )}
 
       {/* Export Section */}
       <BackupManager role="OFFICER" />
