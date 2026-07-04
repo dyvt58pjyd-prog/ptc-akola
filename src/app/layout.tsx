@@ -5,6 +5,13 @@ import Sidebar from "@/components/Sidebar";
 import SplashScreen from "@/components/SplashScreen";
 import { ThemeProvider } from "@/components/ThemeProvider";
 import { getSession } from "@/lib/auth";
+import { Mukta } from "next/font/google";
+
+const mukta = Mukta({ 
+  weight: ['300', '400', '500', '600', '700'],
+  subsets: ['devanagari', 'latin'],
+  display: 'swap',
+});
 
 export const metadata: Metadata = {
   title: "Police Training Centre Akola",
@@ -20,7 +27,7 @@ export default async function RootLayout({
 
   return (
     <html lang="en">
-      <body>
+      <body className={mukta.className}>
         <ThemeProvider>
           <SplashScreen />
           <div className="app-container">
