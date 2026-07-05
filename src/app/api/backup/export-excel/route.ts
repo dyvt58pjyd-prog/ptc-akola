@@ -98,15 +98,23 @@ export async function GET() {
       console.error("Failed to load logo", e);
     }
 
+    // Setup global styles
+    sheet.views = [
+      { state: 'frozen', xSplit: 2, ySplit: 5 }
+    ];
+    sheet.autoFilter = 'A5:AD5';
+
+    // Style Title
     const titleCell = sheet.getCell('B1');
     titleCell.value = 'POLICE TRAINING CENTRE AKOLA\nRecruits Data Report';
-    titleCell.font = { name: 'Arial', size: 24, bold: true, color: { argb: 'FF0F172A' } };
+    titleCell.font = { name: 'Arial', size: 22, bold: true, color: { argb: 'FF0F172A' } };
     titleCell.alignment = { vertical: 'middle', horizontal: 'center', wrapText: true };
     
-    // Add border to the header box
-    const titleBorder = { style: 'thick' as ExcelJS.BorderStyle };
-    sheet.getCell('A1').border = { top: titleBorder, left: titleBorder, bottom: titleBorder };
-    titleCell.border = { top: titleBorder, right: titleBorder, bottom: titleBorder };
+    // Add subtitle with date
+    const dateCell = sheet.getCell('B4');
+    dateCell.value = `Generated on: ${new Date().toLocaleDateString('en-GB')} at ${new Date().toLocaleTimeString('en-US')}`;
+    dateCell.font = { name: 'Arial', size: 10, italic: true, color: { argb: 'FF475569' } };
+    dateCell.alignment = { vertical: 'middle', horizontal: 'center' };
 
     // Setup headers on Row 5
     const headers = [
@@ -118,24 +126,27 @@ export async function GET() {
     
     const headerRow = sheet.getRow(5);
     headerRow.values = headers;
-    headerRow.height = 35;
+    headerRow.height = 40;
     
     for (let i = 1; i <= 30; i++) {
       const cell = headerRow.getCell(i);
-      cell.font = { bold: true, color: { argb: 'FFFFFFFF' } };
+      cell.font = { name: 'Arial', size: 11, bold: true, color: { argb: 'FFFFFFFF' } };
       cell.alignment = { vertical: 'middle', horizontal: 'center', wrapText: true };
       cell.fill = {
         type: 'pattern',
         pattern: 'solid',
-        fgColor: { argb: 'FF1E293B' } // Slate 800
+        fgColor: { argb: 'FF0F172A' } // Dark Navy
       };
       cell.border = {
-        top: { style: 'thin' },
-        left: { style: 'thin' },
-        bottom: { style: 'thin' },
-        right: { style: 'thin' }
+        top: { style: 'thin', color: { argb: 'FF334155' } },
+        left: { style: 'thin', color: { argb: 'FF334155' } },
+        bottom: { style: 'thick', color: { argb: 'FF334155' } },
+        right: { style: 'thin', color: { argb: 'FF334155' } }
       };
     }
+
+    // Define columns requiring left alignment
+    const leftAlignCols = [3, 14, 15, 16]; // Name, Address, Nearest PS, Education
 
     // Data rows
     for (let i = 0; i < recruits.length; i++) {
@@ -200,15 +211,33 @@ export async function GET() {
         }
       }
 
+      // Zebra Striping color
+      const isEven = i % 2 === 0;
+      const rowColor = isEven ? 'FFFFFFFF' : 'FFF8FAFC'; // White or very light slate
+
       // Vertical align all cells and apply perfect borders
       for (let c = 1; c <= 30; c++) {
         const cell = row.getCell(c);
-        cell.alignment = { vertical: 'middle', horizontal: 'center', wrapText: true };
+        cell.font = { name: 'Arial', size: 10, color: { argb: 'FF1E293B' } };
+        
+        // Left align specific columns, center others
+        if (leftAlignCols.includes(c)) {
+          cell.alignment = { vertical: 'middle', horizontal: 'left', wrapText: true, indent: 1 };
+        } else {
+          cell.alignment = { vertical: 'middle', horizontal: 'center', wrapText: true };
+        }
+        
+        cell.fill = {
+          type: 'pattern',
+          pattern: 'solid',
+          fgColor: { argb: rowColor }
+        };
+        
         cell.border = {
-          top: { style: 'thin' },
-          left: { style: 'thin' },
-          bottom: { style: 'thin' },
-          right: { style: 'thin' }
+          top: { style: 'thin', color: { argb: 'FFE2E8F0' } },
+          left: { style: 'thin', color: { argb: 'FFE2E8F0' } },
+          bottom: { style: 'thin', color: { argb: 'FFE2E8F0' } },
+          right: { style: 'thin', color: { argb: 'FFE2E8F0' } }
         };
       }
     }
