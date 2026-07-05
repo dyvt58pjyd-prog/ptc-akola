@@ -5,29 +5,13 @@ import { Activity, MapPin } from "lucide-react";
 
 const COLORS = ['#0f172a', '#eab308', '#22c55e', '#ef4444', '#64748b'];
 
-export default function DashboardCharts({ recruits }: { recruits: any[] }) {
-  // Aggregate data for Unit Chart
-  const unitCounts: Record<string, number> = {};
-  let totalPresent = 0;
-  let totalAbsent = 0;
-
-  recruits.forEach(r => {
-    unitCounts[r.unit] = (unitCounts[r.unit] || 0) + 1;
-    
-    r.attendances?.forEach((a: any) => {
-      if (a.morningStatus === "PRESENT") totalPresent++;
-      else if (a.morningStatus === "ABSENT") totalAbsent++;
-
-      if (a.afternoonStatus === "PRESENT") totalPresent++;
-      else if (a.afternoonStatus === "ABSENT") totalAbsent++;
-    });
-  });
-
-  const unitData = Object.keys(unitCounts).map(d => ({ name: d, count: unitCounts[d] }));
-  const attendanceData = [
-    { name: 'Present', value: totalPresent },
-    { name: 'Absent', value: totalAbsent }
-  ];
+export default function DashboardCharts({ 
+  unitData, 
+  attendanceData 
+}: { 
+  unitData: { name: string; count: number }[],
+  attendanceData: { name: string; value: number }[]
+}) {
 
   return (
     <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(300px, 1fr))", gap: "1.5rem" }}>
@@ -57,7 +41,7 @@ export default function DashboardCharts({ recruits }: { recruits: any[] }) {
           <Activity size={20} color="var(--accent-gold)" />
           Overall Attendance Rate
         </h3>
-        {totalPresent + totalAbsent > 0 ? (
+        {attendanceData.reduce((acc, curr) => acc + curr.value, 0) > 0 ? (
           <div style={{ width: "100%", height: 300 }}>
             <ResponsiveContainer>
               <PieChart>

@@ -14,6 +14,7 @@ export default async function DirectoryPage() {
   let recruits;
   if (user.role === "OFFICER" && user.minChestNumber !== null && user.maxChestNumber !== null) {
     const allRecruits = await prisma.recruit.findMany({
+      select: { id: true, name: true, chestNumber: true, homeDistrict: true, unit: true },
       orderBy: { chestNumber: "asc" }
     });
     recruits = allRecruits.filter(r => {
@@ -21,7 +22,10 @@ export default async function DirectoryPage() {
       return !isNaN(num) && num >= user.minChestNumber! && num <= user.maxChestNumber!;
     });
   } else {
-    recruits = await prisma.recruit.findMany({ orderBy: { chestNumber: "asc" } });
+    recruits = await prisma.recruit.findMany({ 
+      select: { id: true, name: true, chestNumber: true, homeDistrict: true, unit: true },
+      orderBy: { chestNumber: "asc" } 
+    });
   }
 
   // Naturally sort the recruits by chest number (handling numerical values properly)

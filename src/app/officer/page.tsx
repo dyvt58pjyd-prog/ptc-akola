@@ -11,13 +11,18 @@ export default async function OfficerDashboard() {
   const session = await getSession();
   const officerUser = session ? await prisma.user.findUnique({ where: { id: session.userId } }) : null;
 
-  const recruits = await prisma.recruit.findMany({
-    orderBy: { chestNumber: "asc" },
-    include: {
-      evaluations: true,
-      attendances: true
-    }
+  const allRecruits = await prisma.recruit.findMany({
+    select: { id: true, name: true, chestNumber: true, homeDistrict: true, unit: true },
+    orderBy: { chestNumber: "asc" }
   });
+
+  let recruits = allRecruits;
+  if (officerUser && officerUser.minChestNumber && officerUser.maxChestNumber) {
+    recruits = allRecruits.filter(r => {
+      const num = parseInt(r.chestNumber.replace(/\D/g, ''));
+      return !isNaN(num) && num >= officerUser.minChestNumber! && num <= officerUser.maxChestNumber!;
+    });
+  }
 
   recruits.sort((a, b) => {
     const numA = parseInt(a.chestNumber.replace(/\D/g, '')) || 0;
@@ -26,61 +31,79 @@ export default async function OfficerDashboard() {
     return a.chestNumber.localeCompare(b.chestNumber);
   });
 
-  // Calculate top metrics
-  const totalRecruits = recruits.length;
-  
-  let totalEvaluations = 0;
-  let totalSessions = 0;
-  let presentSessions = 0;
-  let activeLeavesToday = 0;
-  
-  // Create an activity feed array
-  const activities: any[] = [];
-  
-  const todayStr = new Date().toISOString().split('T')[0];
+  const recruitIds = recruits.map(r => r.id);
 
-  recruits.forEach(r => {
-    totalEvaluations += r.evaluations.length;
-    
-    // Process attendances for metrics & activity feed
-    r.attendances.forEach(a => {
-      // Metrics
-      totalSessions += 2; // morning + afternoon
-      if (a.morningStatus === "PRESENT") presentSessions++;
-      if (a.afternoonStatus === "PRESENT") presentSessions++;
-      
-      const attDateStr = new Date(a.date).toISOString().split('T')[0];
-      if (attDateStr === todayStr && (a.morningStatus === "LEAVE" || a.afternoonStatus === "LEAVE")) {
-        activeLeavesToday++;
-      }
-      
-      // Activity
-      activities.push({
-        type: "ATTENDANCE",
-        date: new Date(a.date),
-        dateLabel: new Date(a.date).toLocaleDateString('en-GB'),
-        recruitName: r.name,
-        chestNumber: r.chestNumber
-      });
-    });
-    
-    // Process evaluations for activity feed
-    r.evaluations.forEach(e => {
-      activities.push({
-        type: "EVALUATION",
-        date: new Date(e.createdAt || new Date()), // fallback to now if missing
-        dateLabel: `Week ${e.week}`,
-        recruitName: r.name,
-        chestNumber: r.chestNumber
-      });
-    });
+  // Calculate metrics
+  const totalRecruits = recruits.length;
+  const totalEvaluations = await prisma.evaluation.count({ where: { recruitId: { in: recruitIds } } });
+  
+  const presentMorning = await prisma.attendance.count({ where: { recruitId: { in: recruitIds }, morningStatus: "PRESENT" } });
+  const presentAfternoon = await prisma.attendance.count({ where: { recruitId: { in: recruitIds }, afternoonStatus: "PRESENT" } });
+  const presentSessions = presentMorning + presentAfternoon;
+  
+  const totalMorning = await prisma.attendance.count({ where: { recruitId: { in: recruitIds }, morningStatus: { not: "PENDING" } } });
+  const totalAfternoon = await prisma.attendance.count({ where: { recruitId: { in: recruitIds }, afternoonStatus: { not: "PENDING" } } });
+  const totalSessions = totalMorning + totalAfternoon;
+
+  const todayStart = new Date();
+  todayStart.setHours(0,0,0,0);
+  const todayEnd = new Date();
+  todayEnd.setHours(23,59,59,999);
+  
+  const activeLeavesToday = await prisma.attendance.count({
+    where: {
+      recruitId: { in: recruitIds },
+      date: { gte: todayStart, lte: todayEnd },
+      OR: [ { morningStatus: "LEAVE" }, { afternoonStatus: "LEAVE" } ]
+    }
   });
 
-  // Sort activities by date desc
-  activities.sort((a, b) => b.date.getTime() - a.date.getTime());
-  const recentActivities = activities.slice(0, 5);
-
   const overallAttendanceRate = totalSessions > 0 ? Math.round((presentSessions / totalSessions) * 100) : 0;
+
+  // Compute unit data
+  const unitCounts: Record<string, number> = {};
+  recruits.forEach(r => {
+    unitCounts[r.unit] = (unitCounts[r.unit] || 0) + 1;
+  });
+  const unitData = Object.keys(unitCounts).map(d => ({ name: d, count: unitCounts[d] }));
+
+  const attendanceData = [
+    { name: 'Present', value: presentSessions },
+    { name: 'Absent', value: totalSessions - presentSessions }
+  ];
+
+  // Fetch recent activity
+  const recentAttendances = await prisma.attendance.findMany({
+    where: { recruitId: { in: recruitIds } },
+    orderBy: { createdAt: "desc" },
+    take: 5,
+    include: { recruit: { select: { name: true, chestNumber: true } } }
+  });
+  const recentEvaluations = await prisma.evaluation.findMany({
+    where: { recruitId: { in: recruitIds } },
+    orderBy: { createdAt: "desc" },
+    take: 5,
+    include: { recruit: { select: { name: true, chestNumber: true } } }
+  });
+
+  const activities = [
+    ...recentAttendances.map(a => ({
+      type: "ATTENDANCE",
+      date: a.createdAt,
+      dateLabel: new Date(a.date).toLocaleDateString('en-GB'),
+      recruitName: a.recruit.name,
+      chestNumber: a.recruit.chestNumber
+    })),
+    ...recentEvaluations.map(e => ({
+      type: "EVALUATION",
+      date: e.createdAt,
+      dateLabel: `Week ${e.week}`,
+      recruitName: e.recruit.name,
+      chestNumber: e.recruit.chestNumber
+    }))
+  ].sort((a, b) => b.date.getTime() - a.date.getTime()).slice(0, 5);
+  
+  const recentActivities = activities;
 
   // Calculate missing enrollments
   const missingChestNumbers: number[] = [];
@@ -195,9 +218,9 @@ export default async function OfficerDashboard() {
 
       {/* Analytics and Activity Feed */}
       <div style={{ display: "grid", gridTemplateColumns: "2fr 1fr", gap: "2rem", marginBottom: "2rem" }}>
-        <div style={{ minWidth: 0 }}>
-          <DashboardCharts recruits={recruits} />
-        </div>
+        <div style={{ marginBottom: "2rem" }}>
+        <DashboardCharts unitData={unitData} attendanceData={attendanceData} />
+      </div>
         <div style={{ minWidth: 0 }}>
           <RecentActivityFeed activities={recentActivities} />
         </div>

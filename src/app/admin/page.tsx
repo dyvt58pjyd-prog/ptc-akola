@@ -6,12 +6,10 @@ import RecentActivityFeed from "./RecentActivityFeed";
 import BackupManager from "@/components/BackupManager";
 
 export default async function AdminDashboard() {
+  // Fetch recruits for roster
   const recruits = await prisma.recruit.findMany({
-    orderBy: { chestNumber: "asc" },
-    include: {
-      evaluations: true,
-      attendances: true
-    }
+    select: { id: true, name: true, chestNumber: true, homeDistrict: true, unit: true },
+    orderBy: { chestNumber: "asc" }
   });
 
   recruits.sort((a, b) => {
@@ -21,61 +19,73 @@ export default async function AdminDashboard() {
     return a.chestNumber.localeCompare(b.chestNumber);
   });
 
-  // Calculate top metrics
+  // Calculate metrics
   const totalRecruits = recruits.length;
+  const totalEvaluations = await prisma.evaluation.count();
   
-  let totalEvaluations = 0;
-  let totalSessions = 0;
-  let presentSessions = 0;
-  let activeLeavesToday = 0;
+  const presentMorning = await prisma.attendance.count({ where: { morningStatus: "PRESENT" } });
+  const presentAfternoon = await prisma.attendance.count({ where: { afternoonStatus: "PRESENT" } });
+  const presentSessions = presentMorning + presentAfternoon;
   
-  // Create an activity feed array
-  const activities: any[] = [];
-  
-  const todayStr = new Date().toISOString().split('T')[0];
+  const totalMorning = await prisma.attendance.count({ where: { morningStatus: { not: "PENDING" } } });
+  const totalAfternoon = await prisma.attendance.count({ where: { afternoonStatus: { not: "PENDING" } } });
+  const totalSessions = totalMorning + totalAfternoon;
 
-  recruits.forEach(r => {
-    totalEvaluations += r.evaluations.length;
-    
-    // Process attendances for metrics & activity feed
-    r.attendances.forEach(a => {
-      // Metrics
-      totalSessions += 2; // morning + afternoon
-      if (a.morningStatus === "PRESENT") presentSessions++;
-      if (a.afternoonStatus === "PRESENT") presentSessions++;
-      
-      const attDateStr = new Date(a.date).toISOString().split('T')[0];
-      if (attDateStr === todayStr && (a.morningStatus === "LEAVE" || a.afternoonStatus === "LEAVE")) {
-        activeLeavesToday++;
-      }
-      
-      // Activity
-      activities.push({
-        type: "ATTENDANCE",
-        date: new Date(a.date),
-        dateLabel: new Date(a.date).toLocaleDateString('en-GB'),
-        recruitName: r.name,
-        chestNumber: r.chestNumber
-      });
-    });
-    
-    // Process evaluations for activity feed
-    r.evaluations.forEach(e => {
-      activities.push({
-        type: "EVALUATION",
-        date: new Date(e.createdAt || new Date()), // fallback to now if missing
-        dateLabel: `Week ${e.week}`,
-        recruitName: r.name,
-        chestNumber: r.chestNumber
-      });
-    });
+  const todayStart = new Date();
+  todayStart.setHours(0,0,0,0);
+  const todayEnd = new Date();
+  todayEnd.setHours(23,59,59,999);
+  
+  const activeLeavesToday = await prisma.attendance.count({
+    where: {
+      date: { gte: todayStart, lte: todayEnd },
+      OR: [ { morningStatus: "LEAVE" }, { afternoonStatus: "LEAVE" } ]
+    }
   });
 
-  // Sort activities by date desc
-  activities.sort((a, b) => b.date.getTime() - a.date.getTime());
-  const recentActivities = activities.slice(0, 5);
-
   const overallAttendanceRate = totalSessions > 0 ? Math.round((presentSessions / totalSessions) * 100) : 0;
+
+  // Compute unit data
+  const unitGroups = await prisma.recruit.groupBy({
+    by: ['unit'],
+    _count: { _all: true }
+  });
+  const unitData = unitGroups.map(g => ({ name: g.unit, count: g._count._all }));
+  const attendanceData = [
+    { name: 'Present', value: presentSessions },
+    { name: 'Absent', value: totalSessions - presentSessions }
+  ];
+
+  // Fetch recent activity
+  const recentAttendances = await prisma.attendance.findMany({
+    orderBy: { createdAt: "desc" },
+    take: 5,
+    include: { recruit: { select: { name: true, chestNumber: true } } }
+  });
+  const recentEvaluations = await prisma.evaluation.findMany({
+    orderBy: { createdAt: "desc" },
+    take: 5,
+    include: { recruit: { select: { name: true, chestNumber: true } } }
+  });
+
+  const activities = [
+    ...recentAttendances.map(a => ({
+      type: "ATTENDANCE",
+      date: a.createdAt,
+      dateLabel: new Date(a.date).toLocaleDateString('en-GB'),
+      recruitName: a.recruit.name,
+      chestNumber: a.recruit.chestNumber
+    })),
+    ...recentEvaluations.map(e => ({
+      type: "EVALUATION",
+      date: e.createdAt,
+      dateLabel: `Week ${e.week}`,
+      recruitName: e.recruit.name,
+      chestNumber: e.recruit.chestNumber
+    }))
+  ].sort((a, b) => b.date.getTime() - a.date.getTime()).slice(0, 5);
+  
+  const recentActivities = activities;
 
   return (
     <div>
@@ -136,8 +146,8 @@ export default async function AdminDashboard() {
 
       {/* Analytics and Activity Feed */}
       <div style={{ display: "grid", gridTemplateColumns: "2fr 1fr", gap: "2rem", marginBottom: "2rem" }}>
-        <div style={{ minWidth: 0 }}>
-          <DashboardCharts recruits={recruits} />
+        <div style={{ marginBottom: "2rem" }}>
+          <DashboardCharts unitData={unitData} attendanceData={attendanceData} />
         </div>
         <div style={{ minWidth: 0 }}>
           <RecentActivityFeed activities={recentActivities} />
