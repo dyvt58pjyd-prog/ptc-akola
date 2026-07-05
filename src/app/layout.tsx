@@ -1,4 +1,4 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import Link from "next/link";
 import "./globals.css";
 import Sidebar from "@/components/Sidebar";
@@ -13,9 +13,19 @@ const mukta = Mukta({
   display: 'swap',
 });
 
+export const viewport: Viewport = {
+  themeColor: "#0A192F",
+};
+
 export const metadata: Metadata = {
   title: "Police Training Centre Akola",
   description: "Recruit Training Tracker System",
+  manifest: "/manifest.json",
+  appleWebApp: {
+    capable: true,
+    statusBarStyle: "default",
+    title: "PTC Tracker",
+  },
 };
 
 export default async function RootLayout({

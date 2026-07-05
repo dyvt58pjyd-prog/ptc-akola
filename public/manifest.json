@@ -1,0 +1,21 @@
+{
+  "name": "PTC Akola Recruit Tracker",
+  "short_name": "PTC Tracker",
+  "description": "Police Training Centre Akola - Recruit Evaluation System",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#020617",
+  "theme_color": "#0A192F",
+  "icons": [
+    {
+      "src": "/logo.png",
+      "sizes": "192x192",
+      "type": "image/png"
+    },
+    {
+      "src": "/logo.png",
+      "sizes": "512x512",
+      "type": "image/png"
+    }
+  ]
+}
