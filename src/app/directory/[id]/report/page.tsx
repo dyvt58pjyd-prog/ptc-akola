@@ -457,7 +457,7 @@ export default async function RecruitReport({ params }: { params: Promise<{ id: 
           recruit.evaluations.map((ev) => (
             <div key={ev.id} style={{ marginBottom: "30px", pageBreakInside: "avoid" }}>
               <div style={{ fontSize: "14px", fontWeight: "bold", marginBottom: "15px", color: "var(--text-main)", borderBottom: "2px solid var(--text-main)", display: "inline-block", paddingBottom: "5px" }}>
-                Week {ev.week.replace("-W", "-")} {ev.instructorName && `| Instructor: ${ev.instructorName} `}| Evaluator: {(ev as any).officer?.fullName || "Officer"}
+                Week {ev.week.replace("-W", "-")} {ev.instructorName && `| Instructor: ${ev.instructorName}${ev.instructorStartDate && ev.instructorEndDate ? ` (${new Date(ev.instructorStartDate).toLocaleDateString('en-GB')} to ${new Date(ev.instructorEndDate).toLocaleDateString('en-GB')})` : ''} `}| Evaluator: {(ev as any).officer?.fullName || "Officer"}
               </div>
               <div className="data-grid grid-2">
                 <div className="data-item">

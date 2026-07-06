@@ -113,6 +113,8 @@ model Evaluation {
   recruit          Recruit  @relation(fields: [recruitId], references: [id])
   officer          User     @relation(fields: [officerId], references: [id])
   evaluationDate   DateTime?
+  instructorStartDate DateTime?
+  instructorEndDate   DateTime?
 
   createdAt        DateTime @default(now())
   updatedAt        DateTime @updatedAt

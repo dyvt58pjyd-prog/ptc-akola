@@ -241,6 +241,7 @@ export default async function RecruitProfile({ params }: { params: Promise<{ id:
                       {ev.instructorName && (
                         <span className="badge badge-gold" style={{ backgroundColor: "rgba(251, 191, 36, 0.1)" }}>
                           Instructor: {ev.instructorName}
+                          {ev.instructorStartDate && ev.instructorEndDate && ` (${new Date(ev.instructorStartDate).toLocaleDateString('en-GB')} to ${new Date(ev.instructorEndDate).toLocaleDateString('en-GB')})`}
                         </span>
                       )}
                       <span className="badge badge-navy">Logged by {(ev as any).officer?.fullName || "Officer"}</span>

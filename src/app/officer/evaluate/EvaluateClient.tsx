@@ -142,6 +142,16 @@ export default function EvaluateClient({ recruits, initialSquad }: { recruits: a
         </div>
 
         <div className="form-group">
+          <label className="form-label">Instructor Start Date / प्रशिक्षक नियुक्ती सुरवातीची तारीख</label>
+          <input name="instructorStartDate" type="date" className="form-input" />
+        </div>
+
+        <div className="form-group">
+          <label className="form-label">Instructor End Date / प्रशिक्षक नियुक्ती अंतिम तारीख</label>
+          <input name="instructorEndDate" type="date" className="form-input" />
+        </div>
+
+        <div className="form-group">
           <label className="form-label">Physical Training / शारीरिक प्रशिक्षण *</label>
           <input type="text" name="physicalTraining" className="form-input" required placeholder="Enter remarks/score..." />
         </div>

@@ -134,6 +134,8 @@ export async function submitEvaluation(formData: FormData) {
           overallRemarks: data.overallRemarks as string,
           instructorName: data.instructorName ? (data.instructorName as string) : null,
           evaluationDate: data.evaluationDate ? new Date(data.evaluationDate as string) : null,
+          instructorStartDate: data.instructorStartDate ? new Date(data.instructorStartDate as string) : null,
+          instructorEndDate: data.instructorEndDate ? new Date(data.instructorEndDate as string) : null,
         },
         create: {
           recruitId,
@@ -148,6 +150,8 @@ export async function submitEvaluation(formData: FormData) {
           overallRemarks: data.overallRemarks as string,
           instructorName: data.instructorName ? (data.instructorName as string) : null,
           evaluationDate: data.evaluationDate ? new Date(data.evaluationDate as string) : null,
+          instructorStartDate: data.instructorStartDate ? new Date(data.instructorStartDate as string) : null,
+          instructorEndDate: data.instructorEndDate ? new Date(data.instructorEndDate as string) : null,
         }
       })
     ));
