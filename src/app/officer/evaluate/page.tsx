@@ -10,7 +10,9 @@ export default async function EvaluatePage(props: {
   const officer = session ? await prisma.user.findUnique({ where: { id: session.userId } }) : null;
   const squadNumber = searchParams.squad;
 
-  let recruits = await prisma.recruit.findMany();
+  let recruits = await prisma.recruit.findMany({
+    select: { id: true, chestNumber: true, name: true, unit: true, squadNumber: true }
+  });
 
   // Filter recruits based on officer's assigned jurisdiction
   if (officer?.minChestNumber !== null && officer?.maxChestNumber !== null) {

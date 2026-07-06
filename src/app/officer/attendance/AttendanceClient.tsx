@@ -1,8 +1,8 @@
 "use client";
 
 import { useState } from "react";
-import { submitBulkAttendance, registerLeave, markDistrictReturn } from "@/app/actions/attendance";
-import { Save, CalendarRange, X, Target } from "lucide-react";
+import { submitBulkAttendanceWithLeaves, registerLeave, markDistrictReturn } from "@/app/actions/attendance";
+import { Save, CalendarRange, X, Target, Check, AlertCircle } from "lucide-react";
 
 export default function AttendanceClient({ recruits }: { recruits: any[] }) {
   const [date, setDate] = useState(new Date().toISOString().split("T")[0]);
@@ -11,50 +11,75 @@ export default function AttendanceClient({ recruits }: { recruits: any[] }) {
   const [showDistrictReturnModal, setShowDistrictReturnModal] = useState(false);
   const [statusMsg, setStatusMsg] = useState<{type: 'success'|'error', text: string} | null>(null);
 
-  // Multi-select state
-  const [selectedRecruits, setSelectedRecruits] = useState<Set<string>>(new Set());
-  
-  // Status payload state
   const [sessionType, setSessionType] = useState("MORNING");
-  const [status, setStatus] = useState("PRESENT");
-  const [reason, setReason] = useState("");
 
-  const handleSelectAll = () => {
-    if (selectedRecruits.size === recruits.length) {
-      setSelectedRecruits(new Set());
-    } else {
-      setSelectedRecruits(new Set(recruits.map(r => r.id)));
-    }
+  // Map of recruitId -> { status, reason, leaveEndDate }
+  const [attendanceRecords, setAttendanceRecords] = useState<Record<string, {
+    status: "PRESENT" | "MISSED" | "LEAVE";
+    reason: string;
+    leaveEndDate: string;
+  }>>(() => {
+    const initial: Record<string, any> = {};
+    recruits.forEach(r => {
+      initial[r.id] = {
+        status: "PRESENT",
+        reason: "",
+        leaveEndDate: new Date().toISOString().split("T")[0]
+      };
+    });
+    return initial;
+  });
+
+  const updateStatus = (recruitId: string, status: "PRESENT" | "MISSED" | "LEAVE") => {
+    setAttendanceRecords(prev => ({
+      ...prev,
+      [recruitId]: {
+        ...prev[recruitId],
+        status
+      }
+    }));
   };
 
-  const toggleRecruit = (id: string) => {
-    const newSet = new Set(selectedRecruits);
-    if (newSet.has(id)) newSet.delete(id);
-    else newSet.add(id);
-    setSelectedRecruits(newSet);
+  const updateReason = (recruitId: string, reason: string) => {
+    setAttendanceRecords(prev => ({
+      ...prev,
+      [recruitId]: {
+        ...prev[recruitId],
+        reason
+      }
+    }));
+  };
+
+  const updateLeaveEndDate = (recruitId: string, leaveEndDate: string) => {
+    setAttendanceRecords(prev => ({
+      ...prev,
+      [recruitId]: {
+        ...prev[recruitId],
+        leaveEndDate
+      }
+    }));
   };
 
   const handleBulkSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-    if (selectedRecruits.size === 0) {
-      setStatusMsg({ type: "error", text: "Please select at least one recruit. / कृपया किमान एक प्रशिक्षणार्थी निवडा." });
-      return;
-    }
-    
     setLoading(true);
     setStatusMsg(null);
-    
-    const formData = new FormData();
-    formData.append("date", date);
-    formData.append("sessionType", sessionType);
-    formData.append("status", status);
-    formData.append("reason", reason);
-    
-    selectedRecruits.forEach(id => {
-      formData.append("recruitId", id);
-    });
 
-    const result = await submitBulkAttendance(formData);
+    const payload = {
+      date,
+      sessionType,
+      records: recruits.map(r => {
+        const record = attendanceRecords[r.id] || { status: "PRESENT", reason: "", leaveEndDate: "" };
+        return {
+          recruitId: r.id,
+          status: record.status,
+          reason: record.status !== "PRESENT" ? record.reason : null,
+          leaveEndDate: record.status === "LEAVE" ? record.leaveEndDate : null
+        };
+      })
+    };
+
+    const result = await submitBulkAttendanceWithLeaves(payload);
     if (result.success) {
       setStatusMsg({ type: "success", text: "Attendance saved successfully! / उपस्थिती यशस्वीरीत्या जतन केली!" });
     } else {
@@ -93,10 +118,19 @@ export default function AttendanceClient({ recruits }: { recruits: any[] }) {
 
   return (
     <>
-      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "2rem" }}>
-        <div style={{ display: "flex", gap: "1rem", alignItems: "center" }}>
-          <label className="form-label" style={{ marginBottom: 0 }}>Select Date / तारीख निवडा:</label>
-          <input type="date" className="form-input" value={date} onChange={e => setDate(e.target.value)} style={{ width: "auto" }} />
+      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "2rem", flexWrap: "wrap", gap: "1rem" }}>
+        <div style={{ display: "flex", gap: "1rem", alignItems: "center", flexWrap: "wrap" }}>
+          <div style={{ display: "flex", gap: "0.5rem", alignItems: "center" }}>
+            <label className="form-label" style={{ marginBottom: 0 }}>Select Date / तारीख:</label>
+            <input type="date" className="form-input" value={date} onChange={e => setDate(e.target.value)} style={{ width: "auto" }} />
+          </div>
+          <div style={{ display: "flex", gap: "0.5rem", alignItems: "center" }}>
+            <label className="form-label" style={{ marginBottom: 0 }}>Session / सत्र:</label>
+            <select className="form-select" value={sessionType} onChange={e => setSessionType(e.target.value)} style={{ width: "auto" }}>
+              <option value="MORNING">Morning / सकाळ</option>
+              <option value="AFTERNOON">Afternoon / दुपार</option>
+            </select>
+          </div>
         </div>
         
         <div style={{ display: "flex", gap: "1rem" }}>
@@ -104,7 +138,7 @@ export default function AttendanceClient({ recruits }: { recruits: any[] }) {
             <CalendarRange size={20} /> Register Leave / रजा नोंदवा
           </button>
           <button onClick={() => setShowDistrictReturnModal(true)} className="btn btn-outline" style={{ borderColor: "var(--error)", color: "var(--error)" }}>
-            <Target size={20} /> Mark District Return / जिल्ह्यात परत पाठवा
+            <Target size={20} /> Mark District Return
           </button>
         </div>
       </div>
@@ -116,90 +150,153 @@ export default function AttendanceClient({ recruits }: { recruits: any[] }) {
       )}
 
       <form onSubmit={handleBulkSubmit} className="glass-card" style={{ padding: "2rem" }}>
+        <h3 className="heading-2" style={{ marginBottom: "1.5rem" }}>Daily Attendance Roster / दैनिक उपस्थिती यादी</h3>
         
-        <div className="form-group" style={{ marginBottom: "2rem" }}>
-          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "0.5rem" }}>
-            <label className="form-label" style={{ margin: 0 }}>Select Recruits / प्रशिक्षणार्थी निवडा *</label>
-            <button type="button" onClick={handleSelectAll} className="btn btn-outline" style={{ padding: "0.25rem 0.75rem", fontSize: "0.875rem" }}>
-              {selectedRecruits.size === recruits.length ? "Deselect All" : "Select All"}
-            </button>
-          </div>
-          
-          <div style={{ 
-            border: "1px solid var(--border)", 
-            borderRadius: "var(--radius-md)", 
-            maxHeight: "300px", 
-            overflowY: "auto",
-            backgroundColor: "rgba(0,0,0,0.2)"
-          }}>
-            {recruits.map(r => (
-              <label key={r.id} style={{ 
-                display: "flex", 
-                alignItems: "center", 
-                padding: "1rem", 
-                borderBottom: "1px solid rgba(255,255,255,0.05)",
-                cursor: "pointer",
-                backgroundColor: selectedRecruits.has(r.id) ? "rgba(var(--accent-blue-rgb), 0.1)" : "transparent",
-                transition: "all 0.2s"
+        <div style={{ display: "flex", flexDirection: "column", gap: "1rem", marginBottom: "2rem" }}>
+          {recruits.map(r => {
+            const record = attendanceRecords[r.id] || { status: "PRESENT", reason: "", leaveEndDate: "" };
+            return (
+              <div key={r.id} style={{ 
+                border: "1px solid var(--border)", 
+                borderRadius: "var(--radius-md)", 
+                padding: "1rem",
+                backgroundColor: "rgba(0,0,0,0.15)",
+                display: "flex",
+                flexDirection: "column",
+                gap: "1rem"
               }}>
-                <input 
-                  type="checkbox" 
-                  checked={selectedRecruits.has(r.id)}
-                  onChange={() => toggleRecruit(r.id)}
-                  style={{ marginRight: "1rem", transform: "scale(1.2)", accentColor: "var(--accent-blue)" }}
-                />
-                <div style={{ display: "flex", gap: "1rem", flex: 1 }}>
-                  <span style={{ fontWeight: "bold", width: "50px", color: "var(--accent-gold)" }}>#{r.chestNumber}</span>
-                  <span>{r.name}</span>
-                  <span style={{ marginLeft: "auto", color: "var(--text-muted)", fontSize: "0.875rem" }}>{r.unit}</span>
+                <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", flexWrap: "wrap", gap: "1rem" }}>
+                  <div style={{ display: "flex", gap: "1rem", alignItems: "center" }}>
+                    <span style={{ fontWeight: "bold", width: "50px", color: "var(--accent-gold)", fontSize: "1.1rem" }}>#{r.chestNumber}</span>
+                    <span style={{ fontSize: "1.1rem", fontWeight: "600", color: "white" }}>{r.name}</span>
+                    <span style={{ color: "var(--text-muted)", fontSize: "0.9rem" }}>({r.unit})</span>
+                  </div>
+
+                  <div style={{ display: "flex", gap: "0.75rem" }}>
+                    {/* Present Button (Green Tick) */}
+                    <button
+                      type="button"
+                      onClick={() => updateStatus(r.id, "PRESENT")}
+                      style={{
+                        display: "flex",
+                        alignItems: "center",
+                        justifyContent: "center",
+                        width: "44px",
+                        height: "44px",
+                        borderRadius: "var(--radius-md)",
+                        border: "2px solid #22c55e",
+                        backgroundColor: record.status === "PRESENT" ? "#22c55e" : "transparent",
+                        color: record.status === "PRESENT" ? "white" : "#22c55e",
+                        transition: "all 0.2s",
+                        cursor: "pointer"
+                      }}
+                      title="Present"
+                    >
+                      <Check size={24} />
+                    </button>
+
+                    {/* Missed Button (Red Cross) */}
+                    <button
+                      type="button"
+                      onClick={() => updateStatus(r.id, "MISSED")}
+                      style={{
+                        display: "flex",
+                        alignItems: "center",
+                        justifyContent: "center",
+                        width: "44px",
+                        height: "44px",
+                        borderRadius: "var(--radius-md)",
+                        border: "2px solid #ef4444",
+                        backgroundColor: record.status === "MISSED" ? "#ef4444" : "transparent",
+                        color: record.status === "MISSED" ? "white" : "#ef4444",
+                        transition: "all 0.2s",
+                        cursor: "pointer"
+                      }}
+                      title="Missed"
+                    >
+                      <X size={24} />
+                    </button>
+
+                    {/* On Leave Button (Yellow Alert) */}
+                    <button
+                      type="button"
+                      onClick={() => updateStatus(r.id, "LEAVE")}
+                      style={{
+                        display: "flex",
+                        alignItems: "center",
+                        justifyContent: "center",
+                        width: "44px",
+                        height: "44px",
+                        borderRadius: "var(--radius-md)",
+                        border: "2px solid #eab308",
+                        backgroundColor: record.status === "LEAVE" ? "#eab308" : "transparent",
+                        color: record.status === "LEAVE" ? "white" : "#eab308",
+                        transition: "all 0.2s",
+                        cursor: "pointer"
+                      }}
+                      title="On Leave"
+                    >
+                      <AlertCircle size={24} />
+                    </button>
+                  </div>
                 </div>
-              </label>
-            ))}
-            {recruits.length === 0 && (
-              <div style={{ padding: "2rem", textAlign: "center", color: "var(--text-muted)" }}>
-                No recruits found in your assigned range.
+
+                {/* Conditional Inputs */}
+                {record.status === "MISSED" && (
+                  <div style={{ display: "flex", gap: "1rem", flexWrap: "wrap", borderTop: "1px dashed rgba(255,255,255,0.05)", paddingTop: "0.75rem" }}>
+                    <div style={{ flex: 1, minWidth: "200px" }}>
+                      <label className="form-label" style={{ fontSize: "0.875rem" }}>Reason for Missed / अनुपस्थितीचे कारण</label>
+                      <input 
+                        type="text" 
+                        className="form-input" 
+                        value={record.reason} 
+                        onChange={e => updateReason(r.id, e.target.value)} 
+                        placeholder="e.g., Sick, Duty, etc."
+                        required
+                      />
+                    </div>
+                  </div>
+                )}
+
+                {record.status === "LEAVE" && (
+                  <div style={{ display: "flex", gap: "1rem", flexWrap: "wrap", borderTop: "1px dashed rgba(255,255,255,0.05)", paddingTop: "0.75rem" }}>
+                    <div style={{ flex: 1, minWidth: "200px" }}>
+                      <label className="form-label" style={{ fontSize: "0.875rem" }}>Leave Reason / रजेचे कारण</label>
+                      <input 
+                        type="text" 
+                        className="form-input" 
+                        value={record.reason} 
+                        onChange={e => updateReason(r.id, e.target.value)} 
+                        placeholder="e.g., Medical Leave, Home Visit"
+                        required
+                      />
+                    </div>
+                    <div style={{ width: "200px" }}>
+                      <label className="form-label" style={{ fontSize: "0.875rem" }}>Leave End Date / रजेची अंतिम तारीख</label>
+                      <input 
+                        type="date" 
+                        className="form-input" 
+                        value={record.leaveEndDate} 
+                        onChange={e => updateLeaveEndDate(r.id, e.target.value)} 
+                        required
+                      />
+                    </div>
+                  </div>
+                )}
               </div>
-            )}
-          </div>
-          <div style={{ fontSize: "0.875rem", color: "var(--text-muted)", marginTop: "0.5rem" }}>
-            {selectedRecruits.size} recruit(s) selected
-          </div>
+            );
+          })}
+
+          {recruits.length === 0 && (
+            <div style={{ padding: "3rem", textAlign: "center", color: "var(--text-muted)" }}>
+              No recruits found in your range.
+            </div>
+          )}
         </div>
 
-        <hr style={{ border: "0", borderTop: "1px solid var(--border)", margin: "2rem 0" }} />
-
-        <h3 className="heading-2" style={{ marginBottom: "1.5rem" }}>Set Attendance Status</h3>
-        
-        <div className="grid-3" style={{ alignItems: "start" }}>
-          
-          <div className="form-group" style={{ backgroundColor: "rgba(255,255,255,0.02)", padding: "1.5rem", borderRadius: "8px", border: "1px solid var(--border)" }}>
-            <label className="form-label" style={{ color: "var(--accent-gold)" }}>Session Type / सत्र</label>
-            <select className="form-select" value={sessionType} onChange={e => setSessionType(e.target.value)}>
-              <option value="MORNING">Morning / सकाळ</option>
-              <option value="AFTERNOON">Afternoon / दुपार</option>
-            </select>
-          </div>
-
-          <div className="form-group" style={{ backgroundColor: "rgba(255,255,255,0.02)", padding: "1.5rem", borderRadius: "8px", border: "1px solid var(--border)", gridColumn: "span 2" }}>
-            <label className="form-label">Status / उपस्थिती</label>
-            <select className="form-select" value={status} onChange={e => setStatus(e.target.value)} style={{ marginBottom: "1rem" }}>
-              <option value="PRESENT">Present / हजर</option>
-              <option value="MISSED">Missed / चुकले</option>
-              <option value="LEAVE">On Leave / रजेवर</option>
-            </select>
-            {status === "MISSED" && (
-              <>
-                <label className="form-label">Reason / कारण</label>
-                <input type="text" className="form-input" placeholder="Reason for missing..." value={reason} onChange={e => setReason(e.target.value)} />
-              </>
-            )}
-          </div>
-
-        </div>
-
-        <div style={{ marginTop: "2rem", display: "flex", justifyContent: "flex-end" }}>
+        <div style={{ display: "flex", justifyContent: "flex-end" }}>
           <button type="submit" className="btn btn-primary" style={{ padding: "1rem 2.5rem", fontSize: "1.1rem" }} disabled={loading}>
-            <Save size={20} /> {loading ? "Saving..." : "Save Session Attendance / उपस्थिती जतन करा"}
+            <Save size={20} /> {loading ? "Saving..." : "Save Daily Attendance / उपस्थिती जतन करा"}
           </button>
         </div>
       </form>

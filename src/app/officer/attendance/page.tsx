@@ -16,6 +16,7 @@ export default async function AttendancePage() {
   let recruits;
   if (officer.minChestNumber !== null && officer.maxChestNumber !== null) {
     const allRecruits = await prisma.recruit.findMany({
+      select: { id: true, name: true, chestNumber: true, unit: true, squadNumber: true },
       orderBy: { chestNumber: "asc" }
     });
     recruits = allRecruits.filter(r => {
@@ -23,7 +24,10 @@ export default async function AttendancePage() {
       return !isNaN(num) && num >= officer.minChestNumber! && num <= officer.maxChestNumber!;
     });
   } else {
-    recruits = await prisma.recruit.findMany({ orderBy: { chestNumber: "asc" } });
+    recruits = await prisma.recruit.findMany({ 
+      select: { id: true, name: true, chestNumber: true, unit: true, squadNumber: true },
+      orderBy: { chestNumber: "asc" } 
+    });
   }
 
   recruits.sort((a, b) => {

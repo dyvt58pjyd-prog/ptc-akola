@@ -116,3 +116,70 @@ export async function markDistrictReturn(formData: FormData) {
     return { success: false, error: "Failed to mark district return." };
   }
 }
+
+export async function submitBulkAttendanceWithLeaves(data: {
+  date: string;
+  sessionType: string;
+  records: {
+    recruitId: string;
+    status: string; // "PRESENT", "MISSED", "LEAVE"
+    reason?: string | null;
+    leaveEndDate?: string | null;
+  }[];
+}) {
+  try {
+    const session = await getSession();
+    if (!session || session.role !== "OFFICER") {
+      return { success: false, error: "Unauthorized" };
+    }
+
+    const date = new Date(data.date);
+    date.setHours(0,0,0,0);
+
+    await Promise.all(data.records.map(async record => {
+      const { recruitId, status, reason, leaveEndDate } = record;
+
+      // Status in DB is PRESENT or ABSENT or LEAVE. Wait, let's keep the exact status string.
+      // In prisma, Attendance morningStatus/afternoonStatus has no strict enum check but comments say PRESENT/ABSENT.
+      // Let's store "PRESENT", "MISSED", "LEAVE".
+      const dbStatus = status;
+
+      const updateData = data.sessionType === "MORNING" ? 
+        { morningStatus: dbStatus, morningReason: reason } : 
+        { afternoonStatus: dbStatus, afternoonReason: reason };
+
+      const createData = {
+        recruitId, date,
+        morningStatus: data.sessionType === "MORNING" ? dbStatus : "PENDING",
+        morningReason: data.sessionType === "MORNING" ? reason : null,
+        afternoonStatus: data.sessionType === "AFTERNOON" ? dbStatus : "PENDING",
+        afternoonReason: data.sessionType === "AFTERNOON" ? reason : null,
+      };
+
+      await prisma.attendance.upsert({
+        where: { recruitId_date: { recruitId, date } },
+        update: updateData,
+        create: createData
+      });
+
+      // If status is LEAVE, also register in Leave table
+      if (status === "LEAVE") {
+        await prisma.leave.create({
+          data: {
+            recruitId,
+            startDate: date,
+            endDate: leaveEndDate ? new Date(leaveEndDate) : date,
+            reason: reason || "On Leave"
+          }
+        });
+      }
+    }));
+
+    revalidatePath("/officer/attendance");
+    revalidatePath("/leaves");
+    return { success: true };
+  } catch (error) {
+    console.error("Bulk attendance with leaves failed", error);
+    return { success: false, error: "Failed to save attendance." };
+  }
+}
