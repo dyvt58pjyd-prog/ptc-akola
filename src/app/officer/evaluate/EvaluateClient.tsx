@@ -5,12 +5,12 @@ import { Save, CheckCircle } from "lucide-react";
 import { submitEvaluation } from "@/app/actions";
 import { useRouter } from "next/navigation";
 
-export default function EvaluateClient({ recruits }: { recruits: any[] }) {
+export default function EvaluateClient({ recruits, initialSquad }: { recruits: any[], initialSquad?: string }) {
   const router = useRouter();
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState(false);
-  const [selectedRecruits, setSelectedRecruits] = useState<Set<string>>(new Set());
+  const [selectedRecruits, setSelectedRecruits] = useState<Set<string>>(new Set(initialSquad ? recruits.map(r => r.id) : []));
 
   const handleSelectAll = () => {
     if (selectedRecruits.size === recruits.length) {
@@ -132,7 +132,12 @@ export default function EvaluateClient({ recruits }: { recruits: any[] }) {
         </div>
 
         <div className="form-group">
-          <label className="form-label">Instructor Name / प्रशिक्षकाचे नाव</label>
+          <label className="form-label">Evaluation Date / मूल्यमापनाची तारीख</label>
+          <input name="evaluationDate" type="date" className="form-input" />
+        </div>
+
+        <div className="form-group">
+          <label className="form-label">Evaluating Officer Name / मूल्यांकन अधिकाऱ्याचे नाव</label>
           <input type="text" name="instructorName" className="form-input" placeholder="Name of evaluating instructor..." />
         </div>
 

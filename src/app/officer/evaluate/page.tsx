@@ -2,9 +2,14 @@ import { prisma } from "@/lib/prisma";
 import EvaluateClient from "./EvaluateClient";
 import { getSession } from "@/lib/auth";
 
-export default async function EvaluatePage() {
+export default async function EvaluatePage({
+  searchParams,
+}: {
+  searchParams: { squad?: string }
+}) {
   const session = await getSession();
   const officer = session ? await prisma.user.findUnique({ where: { id: session.userId } }) : null;
+  const squadNumber = searchParams.squad;
 
   let recruits = await prisma.recruit.findMany();
 
@@ -17,6 +22,10 @@ export default async function EvaluatePage() {
     });
   }
 
+  if (squadNumber) {
+    recruits = recruits.filter(r => r.squadNumber === squadNumber);
+  }
+
   recruits.sort((a, b) => {
     const numA = parseInt(a.chestNumber.replace(/\D/g, '')) || 0;
     const numB = parseInt(b.chestNumber.replace(/\D/g, '')) || 0;
@@ -26,17 +35,17 @@ export default async function EvaluatePage() {
 
   return (
     <div>
-      <h1 className="heading-1">Evaluate Recruit / प्रशिक्षणार्थी मूल्यमापन</h1>
+      <h1 className="heading-1">Evaluate {squadNumber ? `Squad ${squadNumber}` : 'Recruit'} / {squadNumber ? `तुकडी ${squadNumber} चे मूल्यमापन` : 'प्रशिक्षणार्थी मूल्यमापन'}</h1>
       <p className="text-muted" style={{ marginBottom: "2rem" }}>
-        Record attendance or submit training performance evaluations for a recruit. / प्रशिक्षणार्थीची उपस्थिती नोंदवा किंवा प्रशिक्षण मूल्यमापन सादर करा.
+        {squadNumber ? "Record training performance evaluations for this entire squad." : "Record attendance or submit training performance evaluations for a recruit."}
       </p>
 
       {recruits.length === 0 ? (
         <div className="glass-card text-center">
-          <p className="text-muted">No recruits registered yet. Please register recruits before evaluating.</p>
+          <p className="text-muted">No recruits found for this criteria. Please register recruits before evaluating.</p>
         </div>
       ) : (
-        <EvaluateClient recruits={recruits} />
+        <EvaluateClient recruits={recruits} initialSquad={squadNumber} />
       )}
     </div>
   );

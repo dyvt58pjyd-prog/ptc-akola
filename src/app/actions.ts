@@ -133,6 +133,7 @@ export async function submitEvaluation(formData: FormData) {
           fieldCrafts: data.fieldCrafts as string,
           overallRemarks: data.overallRemarks as string,
           instructorName: data.instructorName ? (data.instructorName as string) : null,
+          evaluationDate: data.evaluationDate ? new Date(data.evaluationDate as string) : null,
         },
         create: {
           recruitId,
@@ -146,6 +147,7 @@ export async function submitEvaluation(formData: FormData) {
           fieldCrafts: data.fieldCrafts as string,
           overallRemarks: data.overallRemarks as string,
           instructorName: data.instructorName ? (data.instructorName as string) : null,
+          evaluationDate: data.evaluationDate ? new Date(data.evaluationDate as string) : null,
         }
       })
     ));
