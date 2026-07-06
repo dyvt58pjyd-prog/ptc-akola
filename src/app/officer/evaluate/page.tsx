@@ -2,11 +2,10 @@ import { prisma } from "@/lib/prisma";
 import EvaluateClient from "./EvaluateClient";
 import { getSession } from "@/lib/auth";
 
-export default async function EvaluatePage({
-  searchParams,
-}: {
-  searchParams: { squad?: string }
+export default async function EvaluatePage(props: {
+  searchParams: Promise<{ squad?: string }>
 }) {
+  const searchParams = await props.searchParams;
   const session = await getSession();
   const officer = session ? await prisma.user.findUnique({ where: { id: session.userId } }) : null;
   const squadNumber = searchParams.squad;

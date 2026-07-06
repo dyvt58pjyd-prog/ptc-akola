@@ -14,7 +14,7 @@ export default async function DirectoryPage() {
   let recruits;
   if (user.role === "OFFICER" && user.minChestNumber !== null && user.maxChestNumber !== null) {
     const allRecruits = await prisma.recruit.findMany({
-      select: { id: true, name: true, chestNumber: true, homeDistrict: true, unit: true },
+      select: { id: true, name: true, chestNumber: true, homeDistrict: true, unit: true, squadNumber: true },
       orderBy: { chestNumber: "asc" }
     });
     recruits = allRecruits.filter(r => {
@@ -23,7 +23,7 @@ export default async function DirectoryPage() {
     });
   } else {
     recruits = await prisma.recruit.findMany({ 
-      select: { id: true, name: true, chestNumber: true, homeDistrict: true, unit: true },
+      select: { id: true, name: true, chestNumber: true, homeDistrict: true, unit: true, squadNumber: true },
       orderBy: { chestNumber: "asc" } 
     });
   }
@@ -59,7 +59,10 @@ export default async function DirectoryPage() {
                 }}>
                   <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
                     <h3 style={{ fontSize: "1.25rem", fontWeight: "700", color: "white" }}>{recruit.name}</h3>
-                    <span className="badge badge-gold" style={{ fontSize: "1rem" }}>{recruit.chestNumber}</span>
+                    <div style={{ display: "flex", gap: "0.5rem" }}>
+                      <span className="badge badge-gold" style={{ fontSize: "1rem" }}>{recruit.chestNumber}</span>
+                      {recruit.squadNumber && <span className="badge badge-navy" style={{ fontSize: "1rem", backgroundColor: "rgba(255,255,255,0.1)", color: "white" }}>Sq: {recruit.squadNumber}</span>}
+                    </div>
                   </div>
                   
                   <div className="text-muted" style={{ fontSize: "0.875rem" }}>
