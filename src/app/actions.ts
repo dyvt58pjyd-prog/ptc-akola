@@ -77,6 +77,12 @@ export async function registerRecruit(formData: FormData) {
   }
 }
 
+function parseOptionalDate(val: any): Date | null {
+  if (!val || typeof val !== "string" || val.trim() === "") return null;
+  const d = new Date(val);
+  return isNaN(d.getTime()) ? null : d;
+}
+
 export async function submitEvaluation(formData: FormData) {
   const data = Object.fromEntries(formData.entries());
   const recruitIds = formData.getAll("recruitId") as string[];
@@ -133,9 +139,9 @@ export async function submitEvaluation(formData: FormData) {
           fieldCrafts: data.fieldCrafts as string,
           overallRemarks: data.overallRemarks as string,
           instructorName: data.instructorName ? (data.instructorName as string) : null,
-          evaluationDate: data.evaluationDate ? new Date(data.evaluationDate as string) : null,
-          instructorStartDate: data.instructorStartDate ? new Date(data.instructorStartDate as string) : null,
-          instructorEndDate: data.instructorEndDate ? new Date(data.instructorEndDate as string) : null,
+          evaluationDate: parseOptionalDate(data.evaluationDate),
+          instructorStartDate: parseOptionalDate(data.instructorStartDate),
+          instructorEndDate: parseOptionalDate(data.instructorEndDate),
         },
         create: {
           recruitId,
@@ -149,9 +155,9 @@ export async function submitEvaluation(formData: FormData) {
           fieldCrafts: data.fieldCrafts as string,
           overallRemarks: data.overallRemarks as string,
           instructorName: data.instructorName ? (data.instructorName as string) : null,
-          evaluationDate: data.evaluationDate ? new Date(data.evaluationDate as string) : null,
-          instructorStartDate: data.instructorStartDate ? new Date(data.instructorStartDate as string) : null,
-          instructorEndDate: data.instructorEndDate ? new Date(data.instructorEndDate as string) : null,
+          evaluationDate: parseOptionalDate(data.evaluationDate),
+          instructorStartDate: parseOptionalDate(data.instructorStartDate),
+          instructorEndDate: parseOptionalDate(data.instructorEndDate),
         }
       })
     ));

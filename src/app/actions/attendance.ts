@@ -117,6 +117,12 @@ export async function markDistrictReturn(formData: FormData) {
   }
 }
 
+function parseOptionalDate(val: any): Date | null {
+  if (!val || typeof val !== "string" || val.trim() === "") return null;
+  const d = new Date(val);
+  return isNaN(d.getTime()) ? null : d;
+}
+
 export async function submitBulkAttendanceWithLeaves(data: {
   date: string;
   sessionType: string;
@@ -139,9 +145,7 @@ export async function submitBulkAttendanceWithLeaves(data: {
     await Promise.all(data.records.map(async record => {
       const { recruitId, status, reason, leaveEndDate } = record;
 
-      // Status in DB is PRESENT or ABSENT or LEAVE. Wait, let's keep the exact status string.
-      // In prisma, Attendance morningStatus/afternoonStatus has no strict enum check but comments say PRESENT/ABSENT.
-      // Let's store "PRESENT", "MISSED", "LEAVE".
+      // Status in DB is PRESENT or ABSENT or LEAVE.
       const dbStatus = status;
 
       const updateData = data.sessionType === "MORNING" ? 
@@ -164,11 +168,12 @@ export async function submitBulkAttendanceWithLeaves(data: {
 
       // If status is LEAVE, also register in Leave table
       if (status === "LEAVE") {
+        const parsedEndDate = parseOptionalDate(leaveEndDate);
         await prisma.leave.create({
           data: {
             recruitId,
             startDate: date,
-            endDate: leaveEndDate ? new Date(leaveEndDate) : date,
+            endDate: parsedEndDate || date,
             reason: reason || "On Leave"
           }
         });
