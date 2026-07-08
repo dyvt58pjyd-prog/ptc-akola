@@ -142,43 +142,48 @@ export async function submitBulkAttendanceWithLeaves(data: {
     const date = new Date(data.date);
     date.setHours(0,0,0,0);
 
-    await Promise.all(data.records.map(async record => {
-      const { recruitId, status, reason, leaveEndDate } = record;
+    // Process in chunks of 10 to prevent connection pool starvation
+    const chunkSize = 10;
+    for (let i = 0; i < data.records.length; i += chunkSize) {
+      const chunk = data.records.slice(i, i + chunkSize);
+      await Promise.all(chunk.map(async record => {
+        const { recruitId, status, reason, leaveEndDate } = record;
 
-      // Status in DB is PRESENT or ABSENT or LEAVE.
-      const dbStatus = status;
+        // Status in DB is PRESENT or ABSENT or LEAVE.
+        const dbStatus = status;
 
-      const updateData = data.sessionType === "MORNING" ? 
-        { morningStatus: dbStatus, morningReason: reason } : 
-        { afternoonStatus: dbStatus, afternoonReason: reason };
+        const updateData = data.sessionType === "MORNING" ? 
+          { morningStatus: dbStatus, morningReason: reason } : 
+          { afternoonStatus: dbStatus, afternoonReason: reason };
 
-      const createData = {
-        recruitId, date,
-        morningStatus: data.sessionType === "MORNING" ? dbStatus : "PENDING",
-        morningReason: data.sessionType === "MORNING" ? reason : null,
-        afternoonStatus: data.sessionType === "AFTERNOON" ? dbStatus : "PENDING",
-        afternoonReason: data.sessionType === "AFTERNOON" ? reason : null,
-      };
+        const createData = {
+          recruitId, date,
+          morningStatus: data.sessionType === "MORNING" ? dbStatus : "PENDING",
+          morningReason: data.sessionType === "MORNING" ? reason : null,
+          afternoonStatus: data.sessionType === "AFTERNOON" ? dbStatus : "PENDING",
+          afternoonReason: data.sessionType === "AFTERNOON" ? reason : null,
+        };
 
-      await prisma.attendance.upsert({
-        where: { recruitId_date: { recruitId, date } },
-        update: updateData,
-        create: createData
-      });
-
-      // If status is LEAVE, also register in Leave table
-      if (status === "LEAVE") {
-        const parsedEndDate = parseOptionalDate(leaveEndDate);
-        await prisma.leave.create({
-          data: {
-            recruitId,
-            startDate: date,
-            endDate: parsedEndDate || date,
-            reason: reason || "On Leave"
-          }
+        await prisma.attendance.upsert({
+          where: { recruitId_date: { recruitId, date } },
+          update: updateData,
+          create: createData
         });
-      }
-    }));
+
+        // If status is LEAVE, also register in Leave table
+        if (status === "LEAVE") {
+          const parsedEndDate = parseOptionalDate(leaveEndDate);
+          await prisma.leave.create({
+            data: {
+              recruitId,
+              startDate: date,
+              endDate: parsedEndDate || date,
+              reason: reason || "On Leave"
+            }
+          });
+        }
+      }));
+    }
 
     revalidatePath("/officer/attendance");
     revalidatePath("/leaves");
@@ -186,5 +191,58 @@ export async function submitBulkAttendanceWithLeaves(data: {
   } catch (error) {
     console.error("Bulk attendance with leaves failed", error);
     return { success: false, error: "Failed to save attendance." };
+  }
+}
+
+export async function getLiveAttendanceSummary() {
+  try {
+    const session = await getSession();
+    if (!session) return { success: false, error: "Unauthorized" };
+
+    const user = await prisma.user.findUnique({ where: { id: session.userId } });
+    if (!user) return { success: false, error: "User not found" };
+
+    const todayStr = new Date().toLocaleString("en-US", { timeZone: "Asia/Kolkata" });
+    const today = new Date(todayStr);
+    today.setHours(0,0,0,0);
+
+    const attendances = await prisma.attendance.findMany({
+      where: { date: today },
+      include: {
+        recruit: {
+          select: { chestNumber: true }
+        }
+      }
+    });
+
+    let filtered = attendances;
+    if (user.role === "OFFICER" && user.minChestNumber !== null && user.maxChestNumber !== null) {
+      filtered = attendances.filter(a => {
+        const num = parseInt(a.recruit.chestNumber.replace(/\D/g, ''));
+        return !isNaN(num) && num >= user.minChestNumber! && num <= user.maxChestNumber!;
+      });
+    }
+
+    const summary = {
+      morning: { present: 0, missed: 0, leave: 0 },
+      afternoon: { present: 0, missed: 0, leave: 0 }
+    };
+
+    filtered.forEach(a => {
+      // morning
+      if (a.morningStatus === "PRESENT") summary.morning.present++;
+      else if (a.morningStatus === "MISSED") summary.morning.missed++;
+      else if (a.morningStatus === "LEAVE") summary.morning.leave++;
+
+      // afternoon
+      if (a.afternoonStatus === "PRESENT") summary.afternoon.present++;
+      else if (a.afternoonStatus === "MISSED") summary.afternoon.missed++;
+      else if (a.afternoonStatus === "LEAVE") summary.afternoon.leave++;
+    });
+
+    return { success: true, summary };
+  } catch (error) {
+    console.error("Failed to fetch live attendance summary", error);
+    return { success: false, error: "Failed to load summary." };
   }
 }

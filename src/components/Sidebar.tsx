@@ -4,6 +4,7 @@ import { useState } from "react";
 import Link from "next/link";
 import Navigation from "./Navigation";
 import ThemeToggle from "./ThemeToggle";
+import LiveAttendanceWidget from "./LiveAttendanceWidget";
 import { Menu, X } from "lucide-react";
 
 export default function Sidebar({ role }: { role: string | null }) {
@@ -47,6 +48,7 @@ export default function Sidebar({ role }: { role: string | null }) {
         <div onClick={() => setIsOpen(false)} style={{ display: "flex", flexDirection: "column", flex: 1, minHeight: 0 }}>
           <Navigation role={role} />
         </div>
+        <LiveAttendanceWidget />
       </aside>
     </>
   );

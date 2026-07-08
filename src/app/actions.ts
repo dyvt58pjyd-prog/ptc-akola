@@ -121,46 +121,50 @@ export async function submitEvaluation(formData: FormData) {
       }
     }
 
-    // Process all selected recruits
-    await Promise.all(recruitIds.map(recruitId => 
-      prisma.evaluation.upsert({
-        where: {
-          recruitId_week_year: {
+    // Process all selected recruits in chunks of 10 to prevent connection pool starvation
+    const chunkSize = 10;
+    for (let i = 0; i < recruitIds.length; i += chunkSize) {
+      const chunk = recruitIds.slice(i, i + chunkSize);
+      await Promise.all(chunk.map(recruitId => 
+        prisma.evaluation.upsert({
+          where: {
+            recruitId_week_year: {
+              recruitId,
+              week: weekValue,
+              year: year,
+            }
+          },
+          update: {
+            physicalTraining: data.physicalTraining as string,
+            drills: data.drills as string,
+            weaponDrill: data.weaponDrill as string,
+            weaponTactics: data.weaponTactics as string,
+            fieldCrafts: data.fieldCrafts as string,
+            overallRemarks: data.overallRemarks as string,
+            instructorName: data.instructorName ? (data.instructorName as string) : null,
+            evaluationDate: parseOptionalDate(data.evaluationDate),
+            instructorStartDate: parseOptionalDate(data.instructorStartDate),
+            instructorEndDate: parseOptionalDate(data.instructorEndDate),
+          },
+          create: {
             recruitId,
+            officerId: officer.id,
             week: weekValue,
             year: year,
+            physicalTraining: data.physicalTraining as string,
+            drills: data.drills as string,
+            weaponDrill: data.weaponDrill as string,
+            weaponTactics: data.weaponTactics as string,
+            fieldCrafts: data.fieldCrafts as string,
+            overallRemarks: data.overallRemarks as string,
+            instructorName: data.instructorName ? (data.instructorName as string) : null,
+            evaluationDate: parseOptionalDate(data.evaluationDate),
+            instructorStartDate: parseOptionalDate(data.instructorStartDate),
+            instructorEndDate: parseOptionalDate(data.instructorEndDate),
           }
-        },
-        update: {
-          physicalTraining: data.physicalTraining as string,
-          drills: data.drills as string,
-          weaponDrill: data.weaponDrill as string,
-          weaponTactics: data.weaponTactics as string,
-          fieldCrafts: data.fieldCrafts as string,
-          overallRemarks: data.overallRemarks as string,
-          instructorName: data.instructorName ? (data.instructorName as string) : null,
-          evaluationDate: parseOptionalDate(data.evaluationDate),
-          instructorStartDate: parseOptionalDate(data.instructorStartDate),
-          instructorEndDate: parseOptionalDate(data.instructorEndDate),
-        },
-        create: {
-          recruitId,
-          officerId: officer.id,
-          week: weekValue,
-          year: year,
-          physicalTraining: data.physicalTraining as string,
-          drills: data.drills as string,
-          weaponDrill: data.weaponDrill as string,
-          weaponTactics: data.weaponTactics as string,
-          fieldCrafts: data.fieldCrafts as string,
-          overallRemarks: data.overallRemarks as string,
-          instructorName: data.instructorName ? (data.instructorName as string) : null,
-          evaluationDate: parseOptionalDate(data.evaluationDate),
-          instructorStartDate: parseOptionalDate(data.instructorStartDate),
-          instructorEndDate: parseOptionalDate(data.instructorEndDate),
-        }
-      })
-    ));
+        })
+      ));
+    }
 
     revalidatePath("/admin");
     return { success: true };
