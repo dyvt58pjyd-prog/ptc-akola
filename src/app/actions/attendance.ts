@@ -246,3 +246,36 @@ export async function getLiveAttendanceSummary() {
     return { success: false, error: "Failed to load summary." };
   }
 }
+
+export async function getAttendanceForDateAndSession(dateString: string, sessionType: string) {
+  try {
+    const session = await getSession();
+    if (!session) return { success: false, error: "Unauthorized" };
+
+    const date = new Date(dateString);
+    date.setHours(0,0,0,0);
+
+    const records = await prisma.attendance.findMany({
+      where: { date }
+    });
+
+    const attendanceMap: Record<string, { status: string, reason: string }> = {};
+
+    records.forEach(r => {
+      const status = sessionType === "MORNING" ? r.morningStatus : r.afternoonStatus;
+      const reason = sessionType === "MORNING" ? r.morningReason : r.afternoonReason;
+      
+      if (status && status !== "PENDING") {
+        attendanceMap[r.recruitId] = {
+          status,
+          reason: reason || ""
+        };
+      }
+    });
+
+    return { success: true, attendanceMap };
+  } catch (error) {
+    console.error("Failed to fetch attendance for date/session", error);
+    return { success: false, error: "Failed to load saved attendance." };
+  }
+}

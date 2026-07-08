@@ -137,7 +137,7 @@ export default function EvaluateClient({ recruits, initialSquad }: { recruits: a
         </div>
 
         <div className="form-group">
-          <label className="form-label">Evaluating Officer Name / मूल्यांकन अधिकाऱ्याचे नाव</label>
+          <label className="form-label">Instructor Name / प्रशिक्षकाचे नाव</label>
           <input type="text" name="instructorName" className="form-input" placeholder="Name of evaluating instructor..." />
         </div>
 

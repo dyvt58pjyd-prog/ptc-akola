@@ -1,12 +1,13 @@
 "use client";
 
-import { useState } from "react";
-import { submitBulkAttendanceWithLeaves, registerLeave, markDistrictReturn } from "@/app/actions/attendance";
+import { useState, useEffect } from "react";
+import { submitBulkAttendanceWithLeaves, registerLeave, markDistrictReturn, getAttendanceForDateAndSession } from "@/app/actions/attendance";
 import { Save, CalendarRange, X, Target, Check, AlertCircle } from "lucide-react";
 
 export default function AttendanceClient({ recruits }: { recruits: any[] }) {
   const [date, setDate] = useState(new Date().toISOString().split("T")[0]);
   const [loading, setLoading] = useState(false);
+  const [loadingRecords, setLoadingRecords] = useState(false);
   const [showLeaveModal, setShowLeaveModal] = useState(false);
   const [showDistrictReturnModal, setShowDistrictReturnModal] = useState(false);
   const [statusMsg, setStatusMsg] = useState<{type: 'success'|'error', text: string} | null>(null);
@@ -29,6 +30,35 @@ export default function AttendanceClient({ recruits }: { recruits: any[] }) {
     });
     return initial;
   });
+
+  useEffect(() => {
+    const loadSavedAttendance = async () => {
+      setLoadingRecords(true);
+      const res = await getAttendanceForDateAndSession(date, sessionType);
+      if (res.success && res.attendanceMap) {
+        const updated = { ...attendanceRecords };
+        recruits.forEach(r => {
+          const saved = res.attendanceMap[r.id];
+          if (saved) {
+            updated[r.id] = {
+              status: saved.status as "PRESENT" | "MISSED" | "LEAVE",
+              reason: saved.reason,
+              leaveEndDate: date
+            };
+          } else {
+            updated[r.id] = {
+              status: "PRESENT",
+              reason: "",
+              leaveEndDate: date
+            };
+          }
+        });
+        setAttendanceRecords(updated);
+      }
+      setLoadingRecords(false);
+    };
+    loadSavedAttendance();
+  }, [date, sessionType]);
 
   const updateStatus = (recruitId: string, status: "PRESENT" | "MISSED" | "LEAVE") => {
     setAttendanceRecords(prev => ({
@@ -153,7 +183,11 @@ export default function AttendanceClient({ recruits }: { recruits: any[] }) {
         <h3 className="heading-2" style={{ marginBottom: "1.5rem" }}>Daily Attendance Roster / दैनिक उपस्थिती यादी</h3>
         
         <div style={{ display: "flex", flexDirection: "column", gap: "1rem", marginBottom: "2rem" }}>
-          {recruits.map(r => {
+          {loadingRecords ? (
+            <div style={{ padding: "4rem", textAlign: "center", color: "var(--text-muted)", fontSize: "1.1rem" }}>
+              Loading saved attendance / जतन केलेली उपस्थिती लोड होत आहे...
+            </div>
+          ) : recruits.map(r => {
             const record = attendanceRecords[r.id] || { status: "PRESENT", reason: "", leaveEndDate: "" };
             return (
               <div key={r.id} style={{ 
@@ -285,9 +319,10 @@ export default function AttendanceClient({ recruits }: { recruits: any[] }) {
                 )}
               </div>
             );
-          })}
+          })
+          }
 
-          {recruits.length === 0 && (
+          {!loadingRecords && recruits.length === 0 && (
             <div style={{ padding: "3rem", textAlign: "center", color: "var(--text-muted)" }}>
               No recruits found in your range.
             </div>
