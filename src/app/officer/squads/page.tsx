@@ -9,7 +9,7 @@ export default async function SquadsDashboard() {
   if (!session) redirect("/");
 
   const officerUser = await prisma.user.findUnique({ where: { id: session.userId } });
-  if (!officerUser || officerUser.role !== "OFFICER") redirect("/");
+  if (!officerUser || (officerUser.role !== "OFFICER" && officerUser.role !== "ADMIN")) redirect("/");
 
   const allRecruits = await prisma.recruit.findMany({
     select: { id: true, name: true, chestNumber: true, squadNumber: true },

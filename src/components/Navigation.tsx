@@ -38,6 +38,13 @@ export default function Navigation({ role }: { role: string | null }) {
                 <div style={{ fontSize: "0.8em", opacity: 0.7, marginTop: "2px" }}>प्रशिक्षण बॅच</div>
               </div>
             </Link>
+            <Link href="/officer/squads" className="nav-link">
+              <Users size={20} />
+              <div>
+                <div>Squads</div>
+                <div style={{ fontSize: "0.8em", opacity: 0.7, marginTop: "2px" }}>तुकड्या</div>
+              </div>
+            </Link>
             <Link href="/directory" className="nav-link">
               <Users size={20} />
               <div>
