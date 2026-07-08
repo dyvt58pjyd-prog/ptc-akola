@@ -131,39 +131,68 @@ export default async function OfficerDashboard() {
       </p>
 
       {/* Quick Actions */}
-      <div className="grid-2" style={{ marginBottom: "2rem" }}>
+      <div style={{
+        display: "grid",
+        gridTemplateColumns: "repeat(auto-fit, minmax(320px, 1fr))",
+        gap: "1.5rem",
+        marginBottom: "2rem"
+      }}>
         <Link href="/officer/register" style={{ textDecoration: "none" }}>
-          <div className="glass-card action-card" style={{ display: "flex", alignItems: "center", gap: "1.5rem", padding: "1.5rem", transition: "all 0.3s ease" }}>
+          <div className="glass-card action-card" style={{ display: "flex", alignItems: "center", gap: "1.5rem", padding: "1.5rem", transition: "all 0.3s ease", height: "100%" }}>
             <div style={{ flexShrink: 0, display: "flex", alignItems: "center", justifyContent: "center", width: "60px", height: "60px", backgroundColor: "rgba(234, 179, 8, 0.1)", color: "var(--accent-gold)", borderRadius: "var(--radius-full)" }}>
               <UserPlus size={32} />
             </div>
             <div>
-              <h2 className="heading-2" style={{ marginBottom: "0.25rem", color: "white" }}>Register Recruit / नवीन नोंदणी</h2>
-              <p className="text-muted" style={{ margin: 0, fontSize: "0.9rem" }}>Enroll a new recruit into the system / प्रणालीमध्ये नवीन प्रशिक्षणार्थीची नोंदणी करा</p>
+              <h2 className="heading-2" style={{ marginBottom: "0.25rem", color: "white", fontSize: "1.1rem" }}>Register Recruit / नवीन नोंदणी</h2>
+              <p className="text-muted" style={{ margin: 0, fontSize: "0.85rem" }}>Enroll a new recruit into the system / नवीन नोंदणी करा</p>
+            </div>
+          </div>
+        </Link>
+
+        <Link href="/officer/attendance" style={{ textDecoration: "none" }}>
+          <div className="glass-card action-card" style={{ display: "flex", alignItems: "center", gap: "1.5rem", padding: "1.5rem", transition: "all 0.3s ease", height: "100%" }}>
+            <div style={{ flexShrink: 0, display: "flex", alignItems: "center", justifyContent: "center", width: "60px", height: "60px", backgroundColor: "rgba(34, 197, 94, 0.1)", color: "#22c55e", borderRadius: "var(--radius-full)" }}>
+              <ClipboardCheck size={32} />
+            </div>
+            <div>
+              <h2 className="heading-2" style={{ marginBottom: "0.25rem", color: "white", fontSize: "1.1rem" }}>Daily Attendance / दैनिक उपस्थिती</h2>
+              <p className="text-muted" style={{ margin: 0, fontSize: "0.85rem" }}>Record morning and afternoon attendance / उपस्थितीची नोंदणी करा</p>
             </div>
           </div>
         </Link>
 
         <Link href="/officer/evaluate" style={{ textDecoration: "none" }}>
-          <div className="glass-card action-card" style={{ display: "flex", alignItems: "center", gap: "1.5rem", padding: "1.5rem", transition: "all 0.3s ease" }}>
+          <div className="glass-card action-card" style={{ display: "flex", alignItems: "center", gap: "1.5rem", padding: "1.5rem", transition: "all 0.3s ease", height: "100%" }}>
             <div style={{ flexShrink: 0, display: "flex", alignItems: "center", justifyContent: "center", width: "60px", height: "60px", backgroundColor: "rgba(59, 130, 246, 0.1)", color: "var(--accent-blue)", borderRadius: "var(--radius-full)" }}>
-              <ClipboardCheck size={32} />
-            </div>
-            <div>
-              <h2 className="heading-2" style={{ marginBottom: "0.25rem", color: "white" }}>Evaluate / उपस्थिती</h2>
-              <p className="text-muted" style={{ margin: 0, fontSize: "0.9rem" }}>Record daily attendance or evaluations / दैनंदिन उपस्थिती किंवा मूल्यमापनाची नोंद करा</p>
-            </div>
-          </div>
-        </Link>
-        
-        <Link href="/officer/batches" style={{ textDecoration: "none", gridColumn: "1 / -1" }}>
-          <div className="glass-card action-card" style={{ display: "flex", alignItems: "center", gap: "1.5rem", padding: "1.5rem", transition: "all 0.3s ease" }}>
-            <div style={{ flexShrink: 0, display: "flex", alignItems: "center", justifyContent: "center", width: "60px", height: "60px", backgroundColor: "rgba(251, 191, 36, 0.1)", color: "var(--accent-gold)", borderRadius: "var(--radius-full)" }}>
               <Target size={32} />
             </div>
             <div>
-              <h2 className="heading-2" style={{ marginBottom: "0.25rem", color: "white" }}>Manage Batches / बॅच व्यवस्थापन</h2>
-              <p className="text-muted" style={{ margin: 0, fontSize: "0.9rem" }}>Create and edit training batches / प्रशिक्षण बॅच तयार करा आणि संपादित करा</p>
+              <h2 className="heading-2" style={{ marginBottom: "0.25rem", color: "white", fontSize: "1.1rem" }}>Weekly Evaluation / साप्ताहिक मूल्यमापन</h2>
+              <p className="text-muted" style={{ margin: 0, fontSize: "0.85rem" }}>Record weekly training scores / मूल्यमापनाची नोंद करा</p>
+            </div>
+          </div>
+        </Link>
+
+        <Link href="/officer/squads" style={{ textDecoration: "none" }}>
+          <div className="glass-card action-card" style={{ display: "flex", alignItems: "center", gap: "1.5rem", padding: "1.5rem", transition: "all 0.3s ease", height: "100%" }}>
+            <div style={{ flexShrink: 0, display: "flex", alignItems: "center", justifyContent: "center", width: "60px", height: "60px", backgroundColor: "rgba(236, 72, 153, 0.1)", color: "#ec4899", borderRadius: "var(--radius-full)" }}>
+              <Users size={32} />
+            </div>
+            <div>
+              <h2 className="heading-2" style={{ marginBottom: "0.25rem", color: "white", fontSize: "1.1rem" }}>Squads / तुकड्या</h2>
+              <p className="text-muted" style={{ margin: 0, fontSize: "0.85rem" }}>Manage squads and bulk evaluations / तुकड्या व्यवस्थापन</p>
+            </div>
+          </div>
+        </Link>
+
+        <Link href="/officer/batches" style={{ textDecoration: "none" }}>
+          <div className="glass-card action-card" style={{ display: "flex", alignItems: "center", gap: "1.5rem", padding: "1.5rem", transition: "all 0.3s ease", height: "100%" }}>
+            <div style={{ flexShrink: 0, display: "flex", alignItems: "center", justifyContent: "center", width: "60px", height: "60px", backgroundColor: "rgba(251, 191, 36, 0.1)", color: "var(--accent-gold)", borderRadius: "var(--radius-full)" }}>
+              <ClipboardCheck size={32} />
+            </div>
+            <div>
+              <h2 className="heading-2" style={{ marginBottom: "0.25rem", color: "white", fontSize: "1.1rem" }}>Manage Batches / बॅच व्यवस्थापन</h2>
+              <p className="text-muted" style={{ margin: 0, fontSize: "0.85rem" }}>Create and edit training batches / बॅच व्यवस्थापित करा</p>
             </div>
           </div>
         </Link>
