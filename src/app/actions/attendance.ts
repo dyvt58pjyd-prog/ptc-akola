@@ -21,8 +21,7 @@ export async function submitBulkAttendance(formData: FormData) {
     const dateString = data.date as string;
     if (!dateString) return { success: false, error: "Date is required." };
 
-    const date = new Date(dateString);
-    date.setHours(0,0,0,0);
+    const date = new Date(dateString + "T00:00:00.000Z");
 
     const sessionType = data.sessionType as string;
     const status = data.status as string;
@@ -139,8 +138,7 @@ export async function submitBulkAttendanceWithLeaves(data: {
       return { success: false, error: "Unauthorized" };
     }
 
-    const date = new Date(data.date);
-    date.setHours(0,0,0,0);
+    const date = new Date(data.date + "T00:00:00.000Z");
 
     // Process in chunks of 10 to prevent connection pool starvation
     const chunkSize = 10;
@@ -202,15 +200,23 @@ export async function getLiveAttendanceSummary() {
     const user = await prisma.user.findUnique({ where: { id: session.userId } });
     if (!user) return { success: false, error: "User not found" };
 
-    const todayStr = new Date().toLocaleString("en-US", { timeZone: "Asia/Kolkata" });
-    const today = new Date(todayStr);
-    today.setHours(0,0,0,0);
+    const formatter = new Intl.DateTimeFormat("en-US", {
+      timeZone: "Asia/Kolkata",
+      year: "numeric",
+      month: "2-digit",
+      day: "2-digit"
+    });
+    const parts = formatter.formatToParts(new Date());
+    const month = parts.find(p => p.type === 'month')?.value;
+    const day = parts.find(p => p.type === 'day')?.value;
+    const year = parts.find(p => p.type === 'year')?.value;
+    const today = new Date(`${year}-${month}-${day}T00:00:00.000Z`);
 
     const attendances = await prisma.attendance.findMany({
       where: { date: today },
       include: {
         recruit: {
-          select: { chestNumber: true }
+          select: { name: true, chestNumber: true }
         }
       }
     });
@@ -223,22 +229,80 @@ export async function getLiveAttendanceSummary() {
       });
     }
 
+    interface TraineeDetail {
+      chestNumber: string;
+      name: string;
+      reason: string;
+    }
+
     const summary = {
-      morning: { present: 0, missed: 0, leave: 0 },
-      afternoon: { present: 0, missed: 0, leave: 0 }
+      morning: { 
+        present: 0, 
+        missed: 0, 
+        leave: 0,
+        missedList: [] as TraineeDetail[],
+        leaveList: [] as TraineeDetail[]
+      },
+      afternoon: { 
+        present: 0, 
+        missed: 0, 
+        leave: 0,
+        missedList: [] as TraineeDetail[],
+        leaveList: [] as TraineeDetail[]
+      }
     };
 
     filtered.forEach(a => {
       // morning
-      if (a.morningStatus === "PRESENT") summary.morning.present++;
-      else if (a.morningStatus === "MISSED") summary.morning.missed++;
-      else if (a.morningStatus === "LEAVE") summary.morning.leave++;
+      if (a.morningStatus === "PRESENT") {
+        summary.morning.present++;
+      } else if (a.morningStatus === "MISSED") {
+        summary.morning.missed++;
+        summary.morning.missedList.push({
+          chestNumber: a.recruit.chestNumber,
+          name: a.recruit.name,
+          reason: a.morningReason || "Not specified"
+        });
+      } else if (a.morningStatus === "LEAVE") {
+        summary.morning.leave++;
+        summary.morning.leaveList.push({
+          chestNumber: a.recruit.chestNumber,
+          name: a.recruit.name,
+          reason: a.morningReason || "On Leave"
+        });
+      }
 
       // afternoon
-      if (a.afternoonStatus === "PRESENT") summary.afternoon.present++;
-      else if (a.afternoonStatus === "MISSED") summary.afternoon.missed++;
-      else if (a.afternoonStatus === "LEAVE") summary.afternoon.leave++;
+      if (a.afternoonStatus === "PRESENT") {
+        summary.afternoon.present++;
+      } else if (a.afternoonStatus === "MISSED") {
+        summary.afternoon.missed++;
+        summary.afternoon.missedList.push({
+          chestNumber: a.recruit.chestNumber,
+          name: a.recruit.name,
+          reason: a.afternoonReason || "Not specified"
+        });
+      } else if (a.afternoonStatus === "LEAVE") {
+        summary.afternoon.leave++;
+        summary.afternoon.leaveList.push({
+          chestNumber: a.recruit.chestNumber,
+          name: a.recruit.name,
+          reason: a.afternoonReason || "On Leave"
+        });
+      }
     });
+
+    const sortList = (list: TraineeDetail[]) => {
+      list.sort((a, b) => {
+        const numA = parseInt(a.chestNumber.replace(/\D/g, '')) || 0;
+        const numB = parseInt(b.chestNumber.replace(/\D/g, '')) || 0;
+        return numA - numB;
+      });
+    };
+    sortList(summary.morning.missedList);
+    sortList(summary.morning.leaveList);
+    sortList(summary.afternoon.missedList);
+    sortList(summary.afternoon.leaveList);
 
     return { success: true, summary };
   } catch (error) {
@@ -252,8 +316,7 @@ export async function getAttendanceForDateAndSession(dateString: string, session
     const session = await getSession();
     if (!session) return { success: false, error: "Unauthorized" };
 
-    const date = new Date(dateString);
-    date.setHours(0,0,0,0);
+    const date = new Date(dateString + "T00:00:00.000Z");
 
     const records = await prisma.attendance.findMany({
       where: { date }

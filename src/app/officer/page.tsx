@@ -45,10 +45,18 @@ export default async function OfficerDashboard() {
   const totalAfternoon = await prisma.attendance.count({ where: { recruitId: { in: recruitIds }, afternoonStatus: { not: "PENDING" } } });
   const totalSessions = totalMorning + totalAfternoon;
 
-  const todayStart = new Date();
-  todayStart.setHours(0,0,0,0);
-  const todayEnd = new Date();
-  todayEnd.setHours(23,59,59,999);
+  const formatter = new Intl.DateTimeFormat("en-US", {
+    timeZone: "Asia/Kolkata",
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit"
+  });
+  const parts = formatter.formatToParts(new Date());
+  const month = parts.find(p => p.type === 'month')?.value;
+  const day = parts.find(p => p.type === 'day')?.value;
+  const year = parts.find(p => p.type === 'year')?.value;
+  const todayStart = new Date(`${year}-${month}-${day}T00:00:00.000Z`);
+  const todayEnd = new Date(`${year}-${month}-${day}T23:59:59.999Z`);
   
   const activeLeavesToday = await prisma.attendance.count({
     where: {
