@@ -342,3 +342,117 @@ export async function getAttendanceForDateAndSession(dateString: string, session
     return { success: false, error: "Failed to load saved attendance." };
   }
 }
+
+export async function getDailyAttendanceDetails(dateString: string) {
+  try {
+    const session = await getSession();
+    if (!session) return { success: false, error: "Unauthorized" };
+
+    const user = await prisma.user.findUnique({ where: { id: session.userId } });
+    if (!user) return { success: false, error: "User not found" };
+
+    const date = new Date(dateString + "T00:00:00.000Z");
+
+    const allRecruits = await prisma.recruit.findMany({
+      select: {
+        id: true,
+        name: true,
+        chestNumber: true,
+        unit: true,
+        squadNumber: true,
+      },
+      orderBy: { chestNumber: "asc" }
+    });
+
+    let recruits = allRecruits;
+    if (user.role === "OFFICER" && user.minChestNumber !== null && user.maxChestNumber !== null) {
+      recruits = allRecruits.filter(r => {
+        const num = parseInt(r.chestNumber.replace(/\D/g, ''));
+        return !isNaN(num) && num >= user.minChestNumber! && num <= user.maxChestNumber!;
+      });
+    }
+
+    recruits.sort((a, b) => {
+      const numA = parseInt(a.chestNumber.replace(/\D/g, '')) || 0;
+      const numB = parseInt(b.chestNumber.replace(/\D/g, '')) || 0;
+      if (numA !== numB) return numA - numB;
+      return a.chestNumber.localeCompare(b.chestNumber);
+    });
+
+    const attendances = await prisma.attendance.findMany({
+      where: {
+        date,
+        recruitId: { in: recruits.map(r => r.id) }
+      }
+    });
+
+    const attendanceMap = new Map(attendances.map(a => [a.recruitId, a]));
+
+    interface TraineeRow {
+      id: string;
+      name: string;
+      chestNumber: string;
+      unit: string;
+      squadNumber: string | null;
+      reason?: string | null;
+    }
+
+    const details = {
+      morning: {
+        present: [] as TraineeRow[],
+        missed: [] as TraineeRow[],
+        leave: [] as TraineeRow[],
+        pending: [] as TraineeRow[]
+      },
+      afternoon: {
+        present: [] as TraineeRow[],
+        missed: [] as TraineeRow[],
+        leave: [] as TraineeRow[],
+        pending: [] as TraineeRow[]
+      }
+    };
+
+    recruits.forEach(r => {
+      const att = attendanceMap.get(r.id);
+
+      // Morning session categorizing
+      const morningStatus = att ? att.morningStatus : "PENDING";
+      const morningReason = att ? att.morningReason : null;
+      const mRow: TraineeRow = {
+        id: r.id,
+        name: r.name,
+        chestNumber: r.chestNumber,
+        unit: r.unit,
+        squadNumber: r.squadNumber,
+        reason: morningReason
+      };
+
+      if (morningStatus === "PRESENT") details.morning.present.push(mRow);
+      else if (morningStatus === "MISSED") details.morning.missed.push(mRow);
+      else if (morningStatus === "LEAVE") details.morning.leave.push(mRow);
+      else details.morning.pending.push(mRow);
+
+      // Afternoon session categorizing
+      const afternoonStatus = att ? att.afternoonStatus : "PENDING";
+      const afternoonReason = att ? att.afternoonReason : null;
+      const aRow: TraineeRow = {
+        id: r.id,
+        name: r.name,
+        chestNumber: r.chestNumber,
+        unit: r.unit,
+        squadNumber: r.squadNumber,
+        reason: afternoonReason
+      };
+
+      if (afternoonStatus === "PRESENT") details.afternoon.present.push(aRow);
+      else if (afternoonStatus === "MISSED") details.afternoon.missed.push(aRow);
+      else if (afternoonStatus === "LEAVE") details.afternoon.leave.push(aRow);
+      else details.afternoon.pending.push(aRow);
+    });
+
+    return { success: true, details };
+  } catch (error) {
+    console.error("Failed to fetch daily attendance details", error);
+    return { success: false, error: "Failed to load attendance report." };
+  }
+}

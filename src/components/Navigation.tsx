@@ -66,6 +66,13 @@ export default function Navigation({ role }: { role: string | null }) {
                 <div style={{ fontSize: "0.8em", opacity: 0.7, marginTop: "2px" }}>सारांश</div>
               </div>
             </Link>
+            <Link href="/attendance-viewer" className="nav-link">
+              <ClipboardCheck size={20} />
+              <div>
+                <div>Attendance Report</div>
+                <div style={{ fontSize: "0.8em", opacity: 0.7, marginTop: "2px" }}>उपस्थिती अहवाल</div>
+              </div>
+            </Link>
             <Link href="/admin/register" className="nav-link">
               <UserPlus size={20} />
               <div>
@@ -145,6 +152,13 @@ export default function Navigation({ role }: { role: string | null }) {
               <div>
                 <div>Daily Attendance</div>
                 <div style={{ fontSize: "0.8em", opacity: 0.7, marginTop: "2px" }}>दैनंदिन उपस्थिती</div>
+              </div>
+            </Link>
+            <Link href="/attendance-viewer" className="nav-link">
+              <ClipboardCheck size={20} />
+              <div>
+                <div>Attendance Report</div>
+                <div style={{ fontSize: "0.8em", opacity: 0.7, marginTop: "2px" }}>उपस्थिती अहवाल</div>
               </div>
             </Link>
           </>

@@ -204,6 +204,18 @@ export default async function OfficerDashboard() {
             </div>
           </div>
         </Link>
+
+        <Link href="/attendance-viewer" style={{ textDecoration: "none" }}>
+          <div className="glass-card action-card" style={{ display: "flex", alignItems: "center", gap: "1.5rem", padding: "1.5rem", transition: "all 0.3s ease", height: "100%" }}>
+            <div style={{ flexShrink: 0, display: "flex", alignItems: "center", justifyContent: "center", width: "60px", height: "60px", backgroundColor: "rgba(16, 185, 129, 0.1)", color: "#10b981", borderRadius: "var(--radius-full)" }}>
+              <ClipboardCheck size={32} />
+            </div>
+            <div>
+              <h2 className="heading-2" style={{ marginBottom: "0.25rem", color: "white", fontSize: "1.1rem" }}>Attendance Report / उपस्थिती अहवाल</h2>
+              <p className="text-muted" style={{ margin: 0, fontSize: "0.85rem" }}>View daily attendance reports / उपस्थिती अहवाल पहा</p>
+            </div>
+          </div>
+        </Link>
       </div>
 
       {/* Advanced Metrics Cards */}
