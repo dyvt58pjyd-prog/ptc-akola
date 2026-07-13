@@ -3,10 +3,11 @@
 import { useEffect, useState } from "react";
 import { getLiveAttendanceSummary } from "@/app/actions/attendance";
 import { usePathname } from "next/navigation";
-import { Activity, Award, Calendar } from "lucide-react";
+import { Activity, Award, Calendar, RefreshCw } from "lucide-react";
 
 export default function LiveAttendanceWidget() {
   const pathname = usePathname();
+  const [refreshing, setRefreshing] = useState(false);
   const [data, setData] = useState<{
     morning: { 
       present: number; 
@@ -25,16 +26,18 @@ export default function LiveAttendanceWidget() {
   } | null>(null);
 
   const fetchSummary = async () => {
+    setRefreshing(true);
     const res = await getLiveAttendanceSummary();
     if (res.success && res.summary) {
       setData(res.summary);
     }
+    setRefreshing(false);
   };
 
   useEffect(() => {
     fetchSummary();
-    // Poll every 10 seconds to keep it truly live
-    const interval = setInterval(fetchSummary, 10000);
+    // Poll every 5 minutes (300000ms) to reduce bandwidth significantly
+    const interval = setInterval(fetchSummary, 300000);
     return () => clearInterval(interval);
   }, [pathname]);
 
@@ -55,9 +58,28 @@ export default function LiveAttendanceWidget() {
       gap: "1rem",
       fontSize: "0.85rem"
     }}>
-      <div style={{ display: "flex", alignItems: "center", gap: "0.5rem", fontWeight: "bold", color: "var(--accent-gold)" }}>
-        <Activity size={16} />
-        <span>Live Today / आजची उपस्थिती</span>
+      <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", fontWeight: "bold", color: "var(--accent-gold)" }}>
+        <div style={{ display: "flex", alignItems: "center", gap: "0.5rem" }}>
+          <Activity size={16} />
+          <span>Live Today / आजची उपस्थिती</span>
+        </div>
+        <button 
+          onClick={fetchSummary}
+          disabled={refreshing}
+          style={{
+            background: "none",
+            border: "none",
+            color: "var(--accent-gold)",
+            cursor: "pointer",
+            display: "flex",
+            alignItems: "center",
+            padding: "2px",
+            opacity: refreshing ? 0.5 : 1
+          }}
+          title="Refresh attendance / रिफ्रेश करा"
+        >
+          <RefreshCw size={14} className={refreshing ? "animate-spin" : ""} style={{ animation: refreshing ? "spin 1s linear infinite" : "none" }} />
+        </button>
       </div>
 
       {/* Morning Session */}
