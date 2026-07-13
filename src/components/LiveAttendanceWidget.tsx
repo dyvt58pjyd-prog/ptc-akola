@@ -36,9 +36,6 @@ export default function LiveAttendanceWidget() {
 
   useEffect(() => {
     fetchSummary();
-    // Poll every 5 minutes (300000ms) to reduce bandwidth significantly
-    const interval = setInterval(fetchSummary, 300000);
-    return () => clearInterval(interval);
   }, [pathname]);
 
   if (!data) return null;
