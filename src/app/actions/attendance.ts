@@ -229,6 +229,19 @@ export async function getLiveAttendanceSummary() {
       });
     }
 
+    const activeRecruits = await prisma.recruit.findMany({
+      where: { isReturnedToDistrict: false },
+      select: { chestNumber: true }
+    });
+
+    let jurisdictionRecruitsCount = activeRecruits.length;
+    if (user.role === "OFFICER" && user.minChestNumber !== null && user.maxChestNumber !== null) {
+      jurisdictionRecruitsCount = activeRecruits.filter(r => {
+        const num = parseInt(r.chestNumber.replace(/\D/g, ''));
+        return !isNaN(num) && num >= user.minChestNumber! && num <= user.maxChestNumber!;
+      }).length;
+    }
+
     interface TraineeDetail {
       chestNumber: string;
       name: string;
@@ -237,14 +250,14 @@ export async function getLiveAttendanceSummary() {
 
     const summary = {
       morning: { 
-        present: 0, 
+        present: jurisdictionRecruitsCount, 
         missed: 0, 
         leave: 0,
         missedList: [] as TraineeDetail[],
         leaveList: [] as TraineeDetail[]
       },
       afternoon: { 
-        present: 0, 
+        present: jurisdictionRecruitsCount, 
         missed: 0, 
         leave: 0,
         missedList: [] as TraineeDetail[],
@@ -254,9 +267,8 @@ export async function getLiveAttendanceSummary() {
 
     filtered.forEach(a => {
       // morning
-      if (a.morningStatus === "PRESENT") {
-        summary.morning.present++;
-      } else if (a.morningStatus === "MISSED") {
+      if (a.morningStatus === "MISSED") {
+        summary.morning.present = Math.max(0, summary.morning.present - 1);
         summary.morning.missed++;
         summary.morning.missedList.push({
           chestNumber: a.recruit.chestNumber,
@@ -264,6 +276,7 @@ export async function getLiveAttendanceSummary() {
           reason: a.morningReason || "Not specified"
         });
       } else if (a.morningStatus === "LEAVE") {
+        summary.morning.present = Math.max(0, summary.morning.present - 1);
         summary.morning.leave++;
         summary.morning.leaveList.push({
           chestNumber: a.recruit.chestNumber,
@@ -273,9 +286,8 @@ export async function getLiveAttendanceSummary() {
       }
 
       // afternoon
-      if (a.afternoonStatus === "PRESENT") {
-        summary.afternoon.present++;
-      } else if (a.afternoonStatus === "MISSED") {
+      if (a.afternoonStatus === "MISSED") {
+        summary.afternoon.present = Math.max(0, summary.afternoon.present - 1);
         summary.afternoon.missed++;
         summary.afternoon.missedList.push({
           chestNumber: a.recruit.chestNumber,
@@ -283,6 +295,7 @@ export async function getLiveAttendanceSummary() {
           reason: a.afternoonReason || "Not specified"
         });
       } else if (a.afternoonStatus === "LEAVE") {
+        summary.afternoon.present = Math.max(0, summary.afternoon.present - 1);
         summary.afternoon.leave++;
         summary.afternoon.leaveList.push({
           chestNumber: a.recruit.chestNumber,
@@ -416,7 +429,7 @@ export async function getDailyAttendanceDetails(dateString: string) {
       const att = attendanceMap.get(r.id);
 
       // Morning session categorizing
-      const morningStatus = att ? att.morningStatus : "PENDING";
+      const morningStatus = (att && att.morningStatus !== "PENDING") ? att.morningStatus : "PRESENT";
       const morningReason = att ? att.morningReason : null;
       const mRow: TraineeRow = {
         id: r.id,
@@ -433,7 +446,7 @@ export async function getDailyAttendanceDetails(dateString: string) {
       else details.morning.pending.push(mRow);
 
       // Afternoon session categorizing
-      const afternoonStatus = att ? att.afternoonStatus : "PENDING";
+      const afternoonStatus = (att && att.afternoonStatus !== "PENDING") ? att.afternoonStatus : "PRESENT";
       const afternoonReason = att ? att.afternoonReason : null;
       const aRow: TraineeRow = {
         id: r.id,
