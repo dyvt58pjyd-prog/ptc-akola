@@ -11,6 +11,7 @@ export default function AttendanceClient({ recruits }: { recruits: any[] }) {
   const [showLeaveModal, setShowLeaveModal] = useState(false);
   const [showDistrictReturnModal, setShowDistrictReturnModal] = useState(false);
   const [statusMsg, setStatusMsg] = useState<{type: 'success'|'error', text: string} | null>(null);
+  const [originallySavedIds, setOriginallySavedIds] = useState<Set<string>>(new Set());
 
   const [sessionType, setSessionType] = useState("MORNING");
 
@@ -36,10 +37,12 @@ export default function AttendanceClient({ recruits }: { recruits: any[] }) {
       setLoadingRecords(true);
       const res = await getAttendanceForDateAndSession(date, sessionType);
       if (res.success && res.attendanceMap) {
+        const savedIds = new Set<string>();
         const updated = { ...attendanceRecords };
         recruits.forEach(r => {
           const saved = res.attendanceMap[r.id];
           if (saved) {
+            savedIds.add(r.id);
             updated[r.id] = {
               status: saved.status as "PRESENT" | "MISSED" | "LEAVE",
               reason: saved.reason,
@@ -53,6 +56,7 @@ export default function AttendanceClient({ recruits }: { recruits: any[] }) {
             };
           }
         });
+        setOriginallySavedIds(savedIds);
         setAttendanceRecords(updated);
       }
       setLoadingRecords(false);
@@ -98,20 +102,31 @@ export default function AttendanceClient({ recruits }: { recruits: any[] }) {
     const payload = {
       date,
       sessionType,
-      records: recruits.map(r => {
-        const record = attendanceRecords[r.id] || { status: "PRESENT", reason: "", leaveEndDate: "" };
-        return {
-          recruitId: r.id,
-          status: record.status,
-          reason: record.status !== "PRESENT" ? record.reason : null,
-          leaveEndDate: record.status === "LEAVE" ? record.leaveEndDate : null
-        };
-      })
+      records: recruits
+        .map(r => {
+          const record = attendanceRecords[r.id] || { status: "PRESENT", reason: "", leaveEndDate: "" };
+          return {
+            recruitId: r.id,
+            status: record.status,
+            reason: record.status !== "PRESENT" ? record.reason : null,
+            leaveEndDate: record.status === "LEAVE" ? record.leaveEndDate : null
+          };
+        })
+        .filter(rec => rec.status !== "PRESENT" || originallySavedIds.has(rec.recruitId))
     };
 
     const result = await submitBulkAttendanceWithLeaves(payload);
     if (result.success) {
       setStatusMsg({ type: "success", text: "Attendance saved successfully! / उपस्थिती यशस्वीरीत्या जतन केली!" });
+      // Update originallySavedIds with the ones currently not present (since they are now in the DB)
+      const newSavedIds = new Set<string>();
+      recruits.forEach(r => {
+        const record = attendanceRecords[r.id];
+        if (record && record.status !== "PRESENT") {
+          newSavedIds.add(r.id);
+        }
+      });
+      setOriginallySavedIds(newSavedIds);
     } else {
       setStatusMsg({ type: "error", text: result.error || "Failed to save. / जतन करण्यात अयशस्वी." });
     }
