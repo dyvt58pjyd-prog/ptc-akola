@@ -1,7 +1,7 @@
 import { prisma } from "@/lib/prisma";
 import { notFound } from "next/navigation";
 import Link from "next/link";
-import { User, MapPin, Target, Calendar, Phone, Droplet, Activity, Printer, Award, Shield, FileText, Edit } from "lucide-react";
+import { User, MapPin, Target, Calendar, Phone, Droplet, Activity, Printer, Award, Shield, FileText, Edit, Stethoscope } from "lucide-react";
 import DeleteEvaluationButton from "@/components/DeleteEvaluationButton";
 import DeleteRecruitButton from "@/components/DeleteRecruitButton";
 
@@ -51,6 +51,82 @@ export default async function RecruitProfile({ params }: { params: Promise<{ id:
 
   const attendancePercentage = totalSessions > 0 ? Math.round((presentSessions / totalSessions) * 100) : 0;
   const isPassing = attendancePercentage >= 75;
+
+  // Calculate Sick Periods
+  const missedAtts = recruit.attendances
+    .filter(a => a.morningStatus === "MISSED" || a.morningStatus === "ABSENT" || a.afternoonStatus === "MISSED" || a.afternoonStatus === "ABSENT" || a.morningStatus === "LEAVE" || a.afternoonStatus === "LEAVE")
+    .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
+
+  interface ProfileSickPeriod {
+    startDate: Date;
+    endDate: Date;
+    totalDays: number;
+    missedPeriods: number;
+    reasons: string[];
+  }
+
+  const profileSickPeriods: ProfileSickPeriod[] = [];
+  let curP: { startDate: Date; endDate: Date; records: typeof missedAtts } | null = null;
+
+  for (const rec of missedAtts) {
+    const d = new Date(rec.date);
+    d.setUTCHours(0, 0, 0, 0);
+
+    if (!curP) {
+      curP = { startDate: d, endDate: d, records: [rec] };
+    } else {
+      const diffDays = Math.round((d.getTime() - curP.endDate.getTime()) / (1000 * 60 * 60 * 24));
+      if (diffDays <= 2) {
+        curP.endDate = d;
+        curP.records.push(rec);
+      } else {
+        const days = Math.round((curP.endDate.getTime() - curP.startDate.getTime()) / (1000 * 60 * 60 * 24)) + 1;
+        let count = 0;
+        const rSet = new Set<string>();
+        curP.records.forEach(r => {
+          if (r.morningStatus === "MISSED" || r.morningStatus === "ABSENT" || r.morningStatus === "LEAVE") {
+            count++;
+            if (r.morningReason) rSet.add(r.morningReason.trim());
+          }
+          if (r.afternoonStatus === "MISSED" || r.afternoonStatus === "ABSENT" || r.afternoonStatus === "LEAVE") {
+            count++;
+            if (r.afternoonReason) rSet.add(r.afternoonReason.trim());
+          }
+        });
+        profileSickPeriods.push({
+          startDate: curP.startDate,
+          endDate: curP.endDate,
+          totalDays: days,
+          missedPeriods: count,
+          reasons: Array.from(rSet)
+        });
+        curP = { startDate: d, endDate: d, records: [rec] };
+      }
+    }
+  }
+
+  if (curP) {
+    const days = Math.round((curP.endDate.getTime() - curP.startDate.getTime()) / (1000 * 60 * 60 * 24)) + 1;
+    let count = 0;
+    const rSet = new Set<string>();
+    curP.records.forEach(r => {
+      if (r.morningStatus === "MISSED" || r.morningStatus === "ABSENT" || r.morningStatus === "LEAVE") {
+        count++;
+        if (r.morningReason) rSet.add(r.morningReason.trim());
+      }
+      if (r.afternoonStatus === "MISSED" || r.afternoonStatus === "ABSENT" || r.afternoonStatus === "LEAVE") {
+        count++;
+        if (r.afternoonReason) rSet.add(r.afternoonReason.trim());
+      }
+    });
+    profileSickPeriods.push({
+      startDate: curP.startDate,
+      endDate: curP.endDate,
+      totalDays: days,
+      missedPeriods: count,
+      reasons: Array.from(rSet)
+    });
+  }
 
   return (
     <div style={{ maxWidth: "1400px", margin: "0 auto", paddingBottom: "4rem" }}>
@@ -286,8 +362,54 @@ export default async function RecruitProfile({ params }: { params: Promise<{ id:
           )}
         </div>
 
-        {/* Right Column: Attendance Log */}
-        <div>
+        {/* Right Column: Attendance & Sick Periods Log */}
+        <div style={{ display: "flex", flexDirection: "column", gap: "2rem" }}>
+          
+          {/* Sick Periods Card */}
+          <div className="glass-card" style={{ padding: "0", overflow: "hidden", border: "1px solid rgba(239, 68, 68, 0.3)" }}>
+            <div style={{ padding: "1.25rem 1.5rem", borderBottom: "1px solid rgba(255,255,255,0.1)", backgroundColor: "rgba(239,68,68,0.1)", display: "flex", alignItems: "center", gap: "0.5rem" }}>
+              <Stethoscope size={20} color="#ef4444" />
+              <h2 style={{ fontSize: "1.15rem", fontWeight: "700", color: "#fca5a5", margin: 0 }}>
+                आजारी कालावधी / SICK PERIOD(S)
+              </h2>
+            </div>
+            <div style={{ padding: "1.25rem 1.5rem" }}>
+              {profileSickPeriods.length === 0 ? (
+                <div style={{ color: "var(--text-muted)", fontSize: "0.9rem" }}>
+                  कोणताही आजारी कालावधी नोंदवलेला नाही (No sick periods).
+                </div>
+              ) : (
+                <div style={{ display: "flex", flexDirection: "column", gap: "0.85rem" }}>
+                  {profileSickPeriods.map((sp, idx) => (
+                    <div 
+                      key={idx}
+                      style={{ 
+                        padding: "0.85rem",
+                        backgroundColor: "rgba(0,0,0,0.3)",
+                        borderRadius: "var(--radius-md)",
+                        border: "1px solid rgba(255,255,255,0.06)"
+                      }}
+                    >
+                      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "0.35rem" }}>
+                        <span style={{ fontWeight: "700", color: "white", fontSize: "0.95rem" }}>
+                          {sp.startDate.toLocaleDateString('en-GB')} ते {sp.endDate.toLocaleDateString('en-GB')}
+                        </span>
+                        <span className="badge badge-error" style={{ fontSize: "0.75rem" }}>
+                          {sp.totalDays} दिवस ({sp.missedPeriods} Period)
+                        </span>
+                      </div>
+                      {sp.reasons.length > 0 && (
+                        <div style={{ fontSize: "0.8rem", color: "#fca5a5", fontStyle: "italic" }}>
+                          कारण: {sp.reasons.join(", ")}
+                        </div>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          </div>
+
           <div className="glass-card" style={{ position: "sticky", top: "2rem", padding: "0", overflow: "hidden" }}>
             <div style={{ padding: "1.5rem 2rem", borderBottom: "1px solid rgba(255,255,255,0.1)", backgroundColor: "rgba(0,0,0,0.2)" }}>
               <h2 style={{ fontSize: "1.25rem", fontWeight: "600", color: "white", display: "flex", alignItems: "center", gap: "0.75rem" }}>

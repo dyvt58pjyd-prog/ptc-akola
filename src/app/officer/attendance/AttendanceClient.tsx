@@ -1,14 +1,16 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { submitBulkAttendanceWithLeaves, registerLeave, markDistrictReturn, getAttendanceForDateAndSession } from "@/app/actions/attendance";
-import { Save, CalendarRange, X, Target, Check, AlertCircle } from "lucide-react";
+import Link from "next/link";
+import { submitBulkAttendanceWithLeaves, registerLeave, markDistrictReturn, getAttendanceForDateAndSession, registerSickPeriod } from "@/app/actions/attendance";
+import { Save, CalendarRange, X, Target, Check, AlertCircle, Stethoscope, FileText } from "lucide-react";
 
 export default function AttendanceClient({ recruits }: { recruits: any[] }) {
   const [date, setDate] = useState(new Date().toISOString().split("T")[0]);
   const [loading, setLoading] = useState(false);
   const [loadingRecords, setLoadingRecords] = useState(false);
   const [showLeaveModal, setShowLeaveModal] = useState(false);
+  const [showSickPeriodModal, setShowSickPeriodModal] = useState(false);
   const [showDistrictReturnModal, setShowDistrictReturnModal] = useState(false);
   const [statusMsg, setStatusMsg] = useState<{type: 'success'|'error', text: string} | null>(null);
   const [originallySavedIds, setOriginallySavedIds] = useState<Set<string>>(new Set());
@@ -147,6 +149,38 @@ export default function AttendanceClient({ recruits }: { recruits: any[] }) {
     setLoading(false);
   };
 
+  const handleSickPeriodSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+    setLoading(true);
+    const formData = new FormData(e.currentTarget);
+    const result = await registerSickPeriod(formData);
+    if (result.success) {
+      setShowSickPeriodModal(false);
+      setStatusMsg({ type: "success", text: "Sick period registered successfully! / आजारी कालावधी यशस्वीरीत्या नोंदवला गेला!" });
+      // Reload attendance for current date & session
+      const res = await getAttendanceForDateAndSession(date, sessionType);
+      if (res.success && res.attendanceMap) {
+        setAttendanceRecords(prev => {
+          const updated = { ...prev };
+          recruits.forEach(r => {
+            const saved = res.attendanceMap[r.id];
+            if (saved) {
+              updated[r.id] = {
+                status: saved.status as "PRESENT" | "MISSED" | "LEAVE",
+                reason: saved.reason,
+                leaveEndDate: date
+              };
+            }
+          });
+          return updated;
+        });
+      }
+    } else {
+      setStatusMsg({ type: "error", text: result.error || "Failed to register sick period. / आजारी कालावधी नोंदणी अयशस्वी." });
+    }
+    setLoading(false);
+  };
+
   const handleDistrictReturnSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     setLoading(true);
@@ -178,12 +212,18 @@ export default function AttendanceClient({ recruits }: { recruits: any[] }) {
           </div>
         </div>
         
-        <div style={{ display: "flex", gap: "1rem" }}>
-          <button onClick={() => setShowLeaveModal(true)} className="btn btn-outline" style={{ borderColor: "var(--accent-gold)", color: "var(--accent-gold)" }}>
-            <CalendarRange size={20} /> Register Leave / रजा नोंदवा
+        <div style={{ display: "flex", gap: "0.75rem", flexWrap: "wrap", alignItems: "center" }}>
+          <button onClick={() => setShowSickPeriodModal(true)} className="btn btn-outline" style={{ borderColor: "#ef4444", color: "#f87171" }}>
+            <Stethoscope size={18} /> Register Sick Period / आजारी कालावधी नोंदवा
           </button>
+          <button onClick={() => setShowLeaveModal(true)} className="btn btn-outline" style={{ borderColor: "var(--accent-gold)", color: "var(--accent-gold)" }}>
+            <CalendarRange size={18} /> Register Leave / रजा नोंदवा
+          </button>
+          <Link href="/attendance-viewer" className="btn btn-outline" style={{ borderColor: "#3b82f6", color: "#60a5fa" }}>
+            <FileText size={18} /> Sick Report / आजारी कालावधी अहवाल
+          </Link>
           <button onClick={() => setShowDistrictReturnModal(true)} className="btn btn-outline" style={{ borderColor: "var(--error)", color: "var(--error)" }}>
-            <Target size={20} /> Mark District Return
+            <Target size={18} /> Mark District Return
           </button>
         </div>
       </div>
@@ -292,17 +332,47 @@ export default function AttendanceClient({ recruits }: { recruits: any[] }) {
 
                 {/* Conditional Inputs */}
                 {record.status === "MISSED" && (
-                  <div style={{ display: "flex", gap: "1rem", flexWrap: "wrap", borderTop: "1px dashed rgba(255,255,255,0.05)", paddingTop: "0.75rem" }}>
-                    <div style={{ flex: 1, minWidth: "200px" }}>
-                      <label className="form-label" style={{ fontSize: "0.875rem" }}>Reason for Missed / अनुपस्थितीचे कारण</label>
+                  <div style={{ display: "flex", flexDirection: "column", gap: "0.5rem", borderTop: "1px dashed rgba(255,255,255,0.05)", paddingTop: "0.75rem" }}>
+                    <div>
+                      <label className="form-label" style={{ fontSize: "0.875rem" }}>Reason for Missed / अनुपस्थिती/आजाराचे कारण</label>
                       <input 
                         type="text" 
                         className="form-input" 
                         value={record.reason} 
                         onChange={e => updateReason(r.id, e.target.value)} 
-                        placeholder="e.g., Sick, Duty, etc."
+                        placeholder="उदा. सर्दी, ताप, कणकण किंवा Duty, SIQ"
                         required
                       />
+                    </div>
+                    {/* Quick Illness Suggestion Chips */}
+                    <div style={{ display: "flex", gap: "0.4rem", flexWrap: "wrap", alignItems: "center" }}>
+                      <span style={{ fontSize: "0.75rem", color: "var(--text-muted)" }}>जलद कारण (Quick select):</span>
+                      {[
+                        "सर्दी, ताप, कणकण",
+                        "थंडीताप, अशक्तपणा",
+                        "खोकला, ताप",
+                        "कंबर दुखी",
+                        "घसा दुखी",
+                        "दवाखाना / SIQ",
+                        "Duty / शासकीय काम"
+                      ].map(chip => (
+                        <button
+                          key={chip}
+                          type="button"
+                          onClick={() => updateReason(r.id, chip)}
+                          style={{
+                            padding: "0.15rem 0.5rem",
+                            fontSize: "0.75rem",
+                            borderRadius: "4px",
+                            border: "1px solid rgba(255,255,255,0.15)",
+                            backgroundColor: record.reason === chip ? "rgba(239,68,68,0.3)" : "rgba(255,255,255,0.05)",
+                            color: record.reason === chip ? "#fca5a5" : "var(--text-muted)",
+                            cursor: "pointer"
+                          }}
+                        >
+                          {chip}
+                        </button>
+                      ))}
                     </div>
                   </div>
                 )}
@@ -383,6 +453,99 @@ export default function AttendanceClient({ recruits }: { recruits: any[] }) {
               </div>
               <button type="submit" className="btn btn-accent" style={{ width: "100%" }} disabled={loading}>
                 {loading ? "Registering..." : "Register Leave / रजा नोंदवा"}
+              </button>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* Sick Period Modal */}
+      {showSickPeriodModal && (
+        <div style={{ position: "fixed", top: 0, left: 0, right: 0, bottom: 0, backgroundColor: "rgba(0,0,0,0.8)", backdropFilter: "blur(4px)", display: "flex", alignItems: "center", justifyContent: "center", zIndex: 100 }}>
+          <div className="glass-card" style={{ width: "100%", maxWidth: "520px", position: "relative", border: "1px solid rgba(239,68,68,0.4)" }}>
+            <button onClick={() => setShowSickPeriodModal(false)} style={{ position: "absolute", top: "1rem", right: "1rem", background: "none", border: "none", color: "white", cursor: "pointer" }}>
+              <X size={24} />
+            </button>
+            <h2 className="heading-2" style={{ color: "#fca5a5", display: "flex", alignItems: "center", gap: "0.5rem" }}>
+              <Stethoscope size={24} /> Register Sick Period / आजारी कालावधी नोंदवा
+            </h2>
+            <p className="text-muted" style={{ marginBottom: "1.25rem", fontSize: "0.85rem" }}>
+              प्रशिक्षणार्थी आजारी असल्यास या तारखेपासून ते या तारखेपर्यंतचा आजारी कालावधी नोंदवा.
+            </p>
+            <form onSubmit={handleSickPeriodSubmit}>
+              <div className="form-group">
+                <label className="form-label">Recruit / प्रशिक्षणार्थी</label>
+                <select name="recruitId" className="form-select" required>
+                  <option value="">-- निवडा (Select Recruit) --</option>
+                  {recruits.map(r => <option key={r.id} value={r.id}>#{r.chestNumber} - {r.name} ({r.unit})</option>)}
+                </select>
+              </div>
+
+              <div className="grid-2">
+                <div className="form-group">
+                  <label className="form-label">या तारखेपासून (From Date)</label>
+                  <input type="date" name="startDate" className="form-input" required defaultValue={date} />
+                </div>
+                <div className="form-group">
+                  <label className="form-label">ते या तारखेपर्यंत (To Date)</label>
+                  <input type="date" name="endDate" className="form-input" required defaultValue={date} />
+                </div>
+              </div>
+
+              <div className="form-group">
+                <label className="form-label">चुकणारे सत्र (Sessions Affected)</label>
+                <select name="sessionScope" className="form-select" defaultValue="BOTH">
+                  <option value="BOTH">दोन्ही सत्रे / Both (सकाळ व दुपार)</option>
+                  <option value="MORNING">फक्त सकाळ सत्र / Morning Only</option>
+                  <option value="AFTERNOON">फक्त दुपार सत्र / Afternoon Only</option>
+                </select>
+              </div>
+
+              <div className="form-group">
+                <label className="form-label">आजारपण / कारण (Illness Reason)</label>
+                <input 
+                  type="text" 
+                  name="reason" 
+                  id="sickReasonInput"
+                  className="form-input" 
+                  required 
+                  placeholder="उदा. सर्दी, ताप, खोकला, कंबर दुखी, SIQ" 
+                  defaultValue="सर्दी, ताप, कणकण"
+                />
+                <div style={{ display: "flex", gap: "0.3rem", flexWrap: "wrap", marginTop: "0.4rem" }}>
+                  {[
+                    "सर्दी, ताप, कणकण",
+                    "थंडीताप, अशक्तपणा",
+                    "खोकला, ताप",
+                    "कंबर दुखी",
+                    "घसा दुखी",
+                    "दवाखाना / SIQ"
+                  ].map(s => (
+                    <button
+                      key={s}
+                      type="button"
+                      onClick={() => {
+                        const inp = document.getElementById("sickReasonInput") as HTMLInputElement;
+                        if (inp) inp.value = s;
+                      }}
+                      style={{
+                        padding: "0.15rem 0.45rem",
+                        fontSize: "0.75rem",
+                        borderRadius: "3px",
+                        border: "1px solid rgba(255,255,255,0.15)",
+                        backgroundColor: "rgba(255,255,255,0.05)",
+                        color: "var(--text-muted)",
+                        cursor: "pointer"
+                      }}
+                    >
+                      {s}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              <button type="submit" className="btn btn-primary" style={{ width: "100%", backgroundColor: "var(--error)", borderColor: "var(--error)" }} disabled={loading}>
+                <Stethoscope size={18} /> {loading ? "नोंदवत आहे..." : "आजारी कालावधी नोंदवा / Save Sick Period"}
               </button>
             </form>
           </div>

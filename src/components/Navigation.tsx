@@ -69,8 +69,8 @@ export default function Navigation({ role }: { role: string | null }) {
             <Link href="/attendance-viewer" className="nav-link">
               <ClipboardCheck size={20} />
               <div>
-                <div>Attendance Report</div>
-                <div style={{ fontSize: "0.8em", opacity: 0.7, marginTop: "2px" }}>उपस्थिती अहवाल</div>
+                <div>Attendance & Sick Period</div>
+                <div style={{ fontSize: "0.8em", opacity: 0.7, marginTop: "2px" }}>उपस्थिती व आजारी कालावधी</div>
               </div>
             </Link>
             <Link href="/admin/register" className="nav-link">
@@ -157,8 +157,8 @@ export default function Navigation({ role }: { role: string | null }) {
             <Link href="/attendance-viewer" className="nav-link">
               <ClipboardCheck size={20} />
               <div>
-                <div>Attendance Report</div>
-                <div style={{ fontSize: "0.8em", opacity: 0.7, marginTop: "2px" }}>उपस्थिती अहवाल</div>
+                <div>Attendance & Sick Period</div>
+                <div style={{ fontSize: "0.8em", opacity: 0.7, marginTop: "2px" }}>उपस्थिती व आजारी कालावधी</div>
               </div>
             </Link>
           </>

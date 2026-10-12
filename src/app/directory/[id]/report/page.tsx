@@ -73,6 +73,85 @@ export default async function RecruitReport({ params }: { params: Promise<{ id: 
   const attendancePercentage = totalSessions > 0 ? Math.round((presentSessions / totalSessions) * 100) : 100;
   const printDate = new Date().toLocaleString('en-GB');
 
+  // Group recruit missed attendances into contiguous Sick Periods
+  const missedRecords = recruit.attendances
+    .filter(a => a.morningStatus === "MISSED" || a.morningStatus === "ABSENT" || a.afternoonStatus === "MISSED" || a.afternoonStatus === "ABSENT" || a.morningStatus === "LEAVE" || a.afternoonStatus === "LEAVE")
+    .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
+
+  interface ReportSickPeriod {
+    startDate: Date;
+    endDate: Date;
+    totalDays: number;
+    missedPeriods: number;
+    reasons: string[];
+    datewise: typeof missedRecords;
+  }
+
+  const reportSickPeriods: ReportSickPeriod[] = [];
+  let currP: { startDate: Date; endDate: Date; records: typeof missedRecords } | null = null;
+
+  for (const rec of missedRecords) {
+    const d = new Date(rec.date);
+    d.setUTCHours(0, 0, 0, 0);
+
+    if (!currP) {
+      currP = { startDate: d, endDate: d, records: [rec] };
+    } else {
+      const diffDays = Math.round((d.getTime() - currP.endDate.getTime()) / (1000 * 60 * 60 * 24));
+      if (diffDays <= 2) {
+        currP.endDate = d;
+        currP.records.push(rec);
+      } else {
+        const days = Math.round((currP.endDate.getTime() - currP.startDate.getTime()) / (1000 * 60 * 60 * 24)) + 1;
+        let count = 0;
+        const rSet = new Set<string>();
+        currP.records.forEach(r => {
+          if (r.morningStatus === "MISSED" || r.morningStatus === "ABSENT" || r.morningStatus === "LEAVE") {
+            count++;
+            if (r.morningReason) rSet.add(r.morningReason.trim());
+          }
+          if (r.afternoonStatus === "MISSED" || r.afternoonStatus === "ABSENT" || r.afternoonStatus === "LEAVE") {
+            count++;
+            if (r.afternoonReason) rSet.add(r.afternoonReason.trim());
+          }
+        });
+        reportSickPeriods.push({
+          startDate: currP.startDate,
+          endDate: currP.endDate,
+          totalDays: days,
+          missedPeriods: count,
+          reasons: Array.from(rSet),
+          datewise: currP.records
+        });
+        currP = { startDate: d, endDate: d, records: [rec] };
+      }
+    }
+  }
+
+  if (currP) {
+    const days = Math.round((currP.endDate.getTime() - currP.startDate.getTime()) / (1000 * 60 * 60 * 24)) + 1;
+    let count = 0;
+    const rSet = new Set<string>();
+    currP.records.forEach(r => {
+      if (r.morningStatus === "MISSED" || r.morningStatus === "ABSENT" || r.morningStatus === "LEAVE") {
+        count++;
+        if (r.morningReason) rSet.add(r.morningReason.trim());
+      }
+      if (r.afternoonStatus === "MISSED" || r.afternoonStatus === "ABSENT" || r.afternoonStatus === "LEAVE") {
+        count++;
+        if (r.afternoonReason) rSet.add(r.afternoonReason.trim());
+      }
+    });
+    reportSickPeriods.push({
+      startDate: currP.startDate,
+      endDate: currP.endDate,
+      totalDays: days,
+      missedPeriods: count,
+      reasons: Array.from(rSet),
+      datewise: currP.records
+    });
+  }
+
   // Helper for bilingual data values
   const bilingualMap: Record<string, string> = {
     "Male": "Male / पुरुष",
@@ -510,8 +589,46 @@ export default async function RecruitReport({ params }: { params: Promise<{ id: 
           </div>
         </div>
 
-        <div style={{ marginTop: "25px", marginBottom: "10px", fontSize: "12px", fontWeight: "700", color: "var(--text-muted)", textTransform: "uppercase" }}>
-          चुकलेल्या सत्रांचे कारण / REASON(S) OF MISSED SESSIONS:
+        {/* SICK PERIOD SUMMARY TABLE */}
+        <div style={{ marginTop: "25px", marginBottom: "8px", fontSize: "12px", fontWeight: "700", color: "var(--text-muted)", textTransform: "uppercase" }}>
+          आजारी कालावधी सारांश / SICK PERIOD(S) SUMMARY (या तारखेपासून ते या तारखेपर्यंत, एकूण दिवस, चुकवलेले PERIOD):
+        </div>
+        <table className="clean-table" style={{ marginBottom: "20px" }}>
+          <thead>
+            <tr>
+              <th style={{ width: "8%" }}>अ.क्र.</th>
+              <th style={{ width: "35%" }}>आजारी कालावधी / SICK PERIOD (या तारखेपासून ते या तारखेपर्यंत)</th>
+              <th style={{ width: "17%" }}>एकूण दिवस / DAYS</th>
+              <th style={{ width: "18%" }}>चुकवलेले PERIOD</th>
+              <th>आजारपण / गैरहजेरीचे कारण / REASON</th>
+            </tr>
+          </thead>
+          <tbody>
+            {reportSickPeriods.length === 0 ? (
+              <tr>
+                <td colSpan={5} style={{ textAlign: "center", fontStyle: "italic", color: "var(--text-muted)" }}>
+                  कोणताही आजारी कालावधी नोंदवलेला नाही / No sick periods recorded.
+                </td>
+              </tr>
+            ) : (
+              reportSickPeriods.map((sp, idx) => (
+                <tr key={idx}>
+                  <td>{idx + 1}</td>
+                  <td style={{ fontWeight: "bold" }}>
+                    {sp.startDate.toLocaleDateString('en-GB')} ते {sp.endDate.toLocaleDateString('en-GB')}
+                  </td>
+                  <td><strong>{sp.totalDays}</strong> दिवस / Days</td>
+                  <td><strong style={{ color: "#dc2626" }}>{sp.missedPeriods}</strong> Sessions</td>
+                  <td>{sp.reasons.length > 0 ? sp.reasons.join(", ") : "आजारी / Sick"}</td>
+                </tr>
+              ))
+            )}
+          </tbody>
+        </table>
+
+        {/* DATEWISE SESSIONS LOG */}
+        <div style={{ marginTop: "15px", marginBottom: "8px", fontSize: "12px", fontWeight: "700", color: "var(--text-muted)", textTransform: "uppercase" }}>
+          सर्व दिवसनिहाय चुकलेले सत्र तपशील / DATEWISE MISSED SESSIONS LOG:
         </div>
         <table className="clean-table">
           <thead>
