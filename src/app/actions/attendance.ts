@@ -329,14 +329,64 @@ export async function getAttendanceForDateAndSession(dateString: string, session
     const session = await getSession();
     if (!session) return { success: false, error: "Unauthorized" };
 
-    const date = new Date(dateString + "T00:00:00.000Z");
+    const startOfDay = new Date(dateString + "T00:00:00.000Z");
+    const endOfDay = new Date(dateString + "T23:59:59.999Z");
 
+    // 1. Fetch attendance records for this date
     const records = await prisma.attendance.findMany({
-      where: { date }
+      where: {
+        date: {
+          gte: startOfDay,
+          lte: endOfDay
+        }
+      },
+      include: {
+        recruit: {
+          select: { id: true, name: true, chestNumber: true, unit: true, squadNumber: true }
+        }
+      }
+    });
+
+    // 2. Fetch active leaves covering this date
+    const activeLeaves = await prisma.leave.findMany({
+      where: {
+        startDate: { lte: endOfDay },
+        endDate: { gte: startOfDay }
+      },
+      include: {
+        recruit: {
+          select: { id: true, name: true, chestNumber: true, unit: true, squadNumber: true }
+        }
+      }
     });
 
     const attendanceMap: Record<string, { status: string, reason: string }> = {};
+    const sickLeaveRecruitsMap = new Map<string, {
+      recruitId: string;
+      name: string;
+      chestNumber: string;
+      unit: string;
+      squadNumber: string | null;
+      reason: string;
+      startDate?: string;
+      endDate?: string;
+    }>();
 
+    // Add active leaves (from official leaves register / sick period entries)
+    activeLeaves.forEach(lv => {
+      sickLeaveRecruitsMap.set(lv.recruitId, {
+        recruitId: lv.recruitId,
+        name: lv.recruit.name,
+        chestNumber: lv.recruit.chestNumber,
+        unit: lv.recruit.unit,
+        squadNumber: lv.recruit.squadNumber,
+        reason: lv.reason || "आजारी रजा / Sick Leave",
+        startDate: lv.startDate.toISOString().split("T")[0],
+        endDate: lv.endDate.toISOString().split("T")[0],
+      });
+    });
+
+    // Process attendance records
     records.forEach(r => {
       const status = sessionType === "MORNING" ? r.morningStatus : r.afternoonStatus;
       const reason = sessionType === "MORNING" ? r.morningReason : r.afternoonReason;
@@ -347,9 +397,25 @@ export async function getAttendanceForDateAndSession(dateString: string, session
           reason: reason || ""
         };
       }
+
+      // If status is officially marked as LEAVE, ensure they are in sickLeaveRecruitsMap
+      if (status === "LEAVE") {
+        if (!sickLeaveRecruitsMap.has(r.recruitId)) {
+          sickLeaveRecruitsMap.set(r.recruitId, {
+            recruitId: r.recruitId,
+            name: r.recruit.name,
+            chestNumber: r.recruit.chestNumber,
+            unit: r.recruit.unit,
+            squadNumber: r.recruit.squadNumber,
+            reason: reason || "आजारी रजा / Sick Leave",
+          });
+        }
+      }
     });
 
-    return { success: true, attendanceMap };
+    const sickLeaveRecruits = Array.from(sickLeaveRecruitsMap.values());
+
+    return { success: true, attendanceMap, sickLeaveRecruits };
   } catch (error) {
     console.error("Failed to fetch attendance for date/session", error);
     return { success: false, error: "Failed to load saved attendance." };
