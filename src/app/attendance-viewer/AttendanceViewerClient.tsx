@@ -24,8 +24,11 @@ import {
   Clock,
   Activity,
   Layers,
-  Sparkles
+  Sparkles,
+  FileText,
+  LayoutGrid
 } from "lucide-react";
+import RegisterSickLeaveModal from "@/components/RegisterSickLeaveModal";
 
 interface TraineeRow {
   id: string;
@@ -87,6 +90,8 @@ export default function AttendanceViewerClient() {
   const [reasonCategoryFilter, setReasonCategoryFilter] = useState<string>("ALL");
   const [expandedRecruits, setExpandedRecruits] = useState<Record<string, boolean>>({});
   const [loadingSick, setLoadingSick] = useState(false);
+  const [sickDisplayMode, setSickDisplayMode] = useState<"CARDS" | "PREVIEW">("CARDS");
+  const [showSickLeaveModal, setShowSickLeaveModal] = useState(false);
 
   const [sickReportData, setSickReportData] = useState<{
     queryStartDate: string;
@@ -245,55 +250,74 @@ export default function AttendanceViewerClient() {
   return (
     <div style={{ maxWidth: "1400px", margin: "0 auto", paddingBottom: "4rem" }}>
       
-      {/* Print Styles */}
+      {/* Professional Boxed Print Styles */}
       <style dangerouslySetInnerHTML={{ __html: `
-        @media print {
-          body {
-            background: white !important;
-            color: black !important;
+        @media screen {
+          .official-print-document {
+            display: ${sickDisplayMode === "PREVIEW" ? "block" : "none"};
           }
-          .sidebar, .nav-links, .mobile-menu-btn, .no-print {
+        }
+        @media print {
+          @page {
+            size: A4 portrait;
+            margin: 10mm 8mm 12mm 8mm;
+          }
+          html, body {
+            background: #ffffff !important;
+            color: #000000 !important;
+            font-family: 'Arial', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif !important;
+            font-size: 10pt !important;
+            line-height: 1.3 !important;
+            -webkit-print-color-adjust: exact !important;
+            print-color-adjust: exact !important;
+          }
+          .sidebar, .nav-links, .mobile-menu-btn, .no-print, header, nav, button {
             display: none !important;
           }
           .main-content {
             margin-left: 0 !important;
+            margin-right: 0 !important;
             padding: 0 !important;
             width: 100% !important;
           }
-          .glass-card {
-            background: white !important;
-            border: 1px solid #ccc !important;
-            box-shadow: none !important;
-            color: black !important;
-            page-break-inside: avoid;
-            margin-bottom: 20px !important;
-          }
-          .print-header {
+          .official-print-document {
             display: block !important;
-            text-align: center;
-            margin-bottom: 25px;
-            border-bottom: 2px solid #000;
-            padding-bottom: 15px;
+            width: 100% !important;
+            background: #ffffff !important;
+            color: #000000 !important;
           }
-          .badge {
-            border: 1px solid #000 !important;
-            color: #000 !important;
-            background: transparent !important;
+          .glass-card {
+            display: none !important;
           }
-        }
-        .print-header {
-          display: none;
+          .print-page-break {
+            page-break-before: always !important;
+          }
+          .print-boxed-table {
+            width: 100% !important;
+            border-collapse: collapse !important;
+            border: 2px solid #000000 !important;
+            margin-bottom: 16px !important;
+          }
+          .print-boxed-table th, 
+          .print-boxed-table td {
+            border: 1px solid #000000 !important;
+            padding: 5px 8px !important;
+            color: #000000 !important;
+            font-size: 9.5pt !important;
+          }
+          .print-boxed-table th {
+            background-color: #f1f5f9 !important;
+            font-weight: 700 !important;
+          }
+          .print-recruit-card {
+            page-break-inside: avoid !important;
+            break-inside: avoid !important;
+            border: 2px solid #000000 !important;
+            margin-bottom: 18px !important;
+            background: #ffffff !important;
+          }
         }
       `}} />
-
-      {/* Print Header */}
-      <div className="print-header">
-        <h1 style={{ fontSize: "20px", fontWeight: "bold", margin: 0 }}>पोलीस प्रशिक्षण केंद्र, अकोला / POLICE TRAINING CENTRE, AKOLA</h1>
-        <h2 style={{ fontSize: "16px", margin: "5px 0 0 0" }}>मासिक आजारी कालावधी व चुकवलेले Period अहवाल / SICK PERIOD & MISSED PERIODS REPORT</h2>
-        <p style={{ fontSize: "13px", margin: "5px 0 0 0", color: "#555" }}>
-          कालावधी / Period: {sickReportData?.formattedQueryStartDate} ते {sickReportData?.formattedQueryEndDate}
-        </p>
-      </div>
 
       {/* TOP BAR: View Mode Switcher */}
       <div className="no-print" style={{ 
@@ -474,14 +498,98 @@ export default function AttendanceViewerClient() {
               </div>
 
               {/* Action Buttons */}
-              <div style={{ display: "flex", gap: "0.75rem", alignItems: "center" }}>
+              <div style={{ display: "flex", gap: "0.75rem", alignItems: "center", flexWrap: "wrap" }}>
+                {/* View Mode Toggle: Cards vs Boxed Register Table */}
+                <div style={{ 
+                  display: "inline-flex", 
+                  backgroundColor: "rgba(0,0,0,0.35)", 
+                  padding: "3px", 
+                  borderRadius: "var(--radius-md)", 
+                  border: "1px solid rgba(255,255,255,0.15)" 
+                }}>
+                  <button
+                    type="button"
+                    onClick={() => setSickDisplayMode("CARDS")}
+                    style={{
+                      display: "flex",
+                      alignItems: "center",
+                      gap: "0.4rem",
+                      padding: "0.45rem 0.85rem",
+                      borderRadius: "var(--radius-sm)",
+                      border: "none",
+                      fontSize: "0.85rem",
+                      fontWeight: sickDisplayMode === "CARDS" ? "700" : "500",
+                      cursor: "pointer",
+                      backgroundColor: sickDisplayMode === "CARDS" ? "var(--primary-navy-light)" : "transparent",
+                      color: sickDisplayMode === "CARDS" ? "#ffffff" : "var(--text-muted)",
+                      transition: "all 0.15s"
+                    }}
+                  >
+                    <LayoutGrid size={15} />
+                    <span>कार्ड व्ह्यू (Cards)</span>
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setSickDisplayMode("PREVIEW")}
+                    style={{
+                      display: "flex",
+                      alignItems: "center",
+                      gap: "0.4rem",
+                      padding: "0.45rem 0.85rem",
+                      borderRadius: "var(--radius-sm)",
+                      border: "none",
+                      fontSize: "0.85rem",
+                      fontWeight: sickDisplayMode === "PREVIEW" ? "700" : "500",
+                      cursor: "pointer",
+                      backgroundColor: sickDisplayMode === "PREVIEW" ? "var(--accent-gold)" : "transparent",
+                      color: sickDisplayMode === "PREVIEW" ? "#000000" : "var(--text-muted)",
+                      transition: "all 0.15s"
+                    }}
+                  >
+                    <FileText size={15} />
+                    <span>नोंदवही प्रिव्ह्यू (Register Table)</span>
+                  </button>
+                </div>
+
+                {/* Register Sick Leave Modal trigger */}
+                <button 
+                  type="button"
+                  onClick={() => setShowSickLeaveModal(true)}
+                  className="btn"
+                  style={{ 
+                    display: "flex", 
+                    gap: "0.5rem", 
+                    alignItems: "center", 
+                    backgroundColor: "rgba(239, 68, 68, 0.15)", 
+                    border: "1px solid rgba(239, 68, 68, 0.45)",
+                    color: "#fca5a5",
+                    fontWeight: "700",
+                    padding: "0.55rem 1.1rem",
+                    borderRadius: "var(--radius-md)",
+                    cursor: "pointer",
+                    transition: "all 0.15s"
+                  }}
+                >
+                  <Stethoscope size={18} />
+                  <span>+ आजारी रजा नोंदवा / Register Sick Leave</span>
+                </button>
+
                 <button 
                   onClick={() => window.print()}
                   className="btn btn-primary"
-                  style={{ display: "flex", gap: "0.5rem", alignItems: "center", backgroundColor: "var(--primary-navy)", borderColor: "var(--accent-gold)" }}
+                  style={{ 
+                    display: "flex", 
+                    gap: "0.5rem", 
+                    alignItems: "center", 
+                    backgroundColor: "var(--accent-gold)", 
+                    color: "#000000",
+                    borderColor: "var(--accent-gold)",
+                    fontWeight: "700",
+                    boxShadow: "0 4px 14px rgba(251,191,36,0.3)"
+                  }}
                 >
                   <Printer size={18} />
-                  <span>प्रिंट अहवाल / Print Report</span>
+                  <span>प्रिंट अहवाल / Print Boxed Report</span>
                 </button>
               </div>
             </div>
@@ -704,178 +812,600 @@ export default function AttendanceViewerClient() {
               </p>
             </div>
           ) : (
-            <div style={{ display: "flex", flexDirection: "column", gap: "1.75rem" }}>
-              {filteredSickRecruits.map((recruit, rIdx) => {
-                const isExpanded = !!expandedRecruits[recruit.recruitId];
-                return (
-                  <div 
-                    key={recruit.recruitId}
-                    className="glass-card"
-                    style={{ 
-                      padding: 0, 
-                      overflow: "hidden",
-                      border: "1px solid rgba(239,68,68,0.25)",
-                      backgroundColor: "rgba(15, 23, 42, 0.65)"
-                    }}
-                  >
-                    {/* Header Row */}
-                    <div style={{ 
-                      padding: "1.25rem 1.75rem",
-                      backgroundColor: "rgba(0,0,0,0.35)",
-                      borderBottom: "1px solid rgba(255,255,255,0.08)",
-                      display: "flex",
-                      justifyContent: "space-between",
-                      alignItems: "center",
-                      flexWrap: "wrap",
-                      gap: "1rem"
-                    }}>
-                      
-                      {/* Left: Recruit Info */}
-                      <div style={{ display: "flex", alignItems: "center", gap: "1rem", flexWrap: "wrap" }}>
-                        <span className="badge badge-gold" style={{ fontSize: "1.1rem", padding: "0.4rem 1rem", letterSpacing: "1px" }}>
-                          #{recruit.chestNumber}
-                        </span>
-                        <div>
-                          <div style={{ fontSize: "1.2rem", fontWeight: "700", color: "white" }}>
-                            {recruit.name}
-                          </div>
-                          <div style={{ fontSize: "0.85rem", color: "var(--text-muted)" }}>
-                            घटक (Unit): <strong>{recruit.unit}</strong> {recruit.squadNumber ? `| तुकडी (Squad): ${recruit.squadNumber}` : ""}
-                          </div>
-                        </div>
-                      </div>
-
-                      {/* Right: Key Period Badges & Toggle */}
-                      <div style={{ display: "flex", alignItems: "center", gap: "0.75rem", flexWrap: "wrap" }}>
-                        
-                        {/* Period Span Highlights */}
-                        {recruit.periods.map((p, pIdx) => (
-                          <div 
-                            key={p.periodId}
-                            style={{ 
-                              display: "inline-flex",
-                              alignItems: "center",
-                              gap: "0.5rem",
-                              padding: "0.4rem 0.85rem",
-                              borderRadius: "var(--radius-md)",
-                              backgroundColor: "rgba(239,68,68,0.15)",
-                              border: "1px solid rgba(239,68,68,0.35)",
-                              color: "#fca5a5",
-                              fontSize: "0.85rem"
-                            }}
-                          >
-                            <Stethoscope size={15} />
-                            <span>
-                              <strong>कालावधी {recruit.periods.length > 1 ? `#${pIdx + 1}` : ""}:</strong> {p.formattedStartDate} ते {p.formattedEndDate}
-                            </span>
-                            <span style={{ 
-                              backgroundColor: "rgba(239,68,68,0.3)", 
-                              padding: "0.15rem 0.5rem", 
-                              borderRadius: "4px",
-                              fontWeight: "700",
-                              color: "white"
-                            }}>
-                              {p.totalDays} दिवस ({p.totalMissedPeriods} Period)
-                            </span>
-                          </div>
-                        ))}
-
-                        {/* Overall Totals */}
+            <>
+              {/* ========================================================
+                  VIEW A: SCREEN INTERACTIVE CARDS (Screen view only)
+                  ======================================================== */}
+              {sickDisplayMode === "CARDS" && (
+                <div className="no-print" style={{ display: "flex", flexDirection: "column", gap: "1.75rem" }}>
+                  {filteredSickRecruits.map((recruit) => {
+                    const isExpanded = !!expandedRecruits[recruit.recruitId];
+                    return (
+                      <div 
+                        key={recruit.recruitId}
+                        className="glass-card"
+                        style={{ 
+                          padding: 0, 
+                          overflow: "hidden",
+                          border: "1px solid rgba(239,68,68,0.35)",
+                          backgroundColor: "rgba(15, 23, 42, 0.75)",
+                          boxShadow: "0 6px 20px rgba(0,0,0,0.25)"
+                        }}
+                      >
+                        {/* Header Row */}
                         <div style={{ 
-                          padding: "0.4rem 0.85rem", 
-                          backgroundColor: "rgba(251,191,36,0.12)",
-                          border: "1px solid rgba(251,191,36,0.3)",
-                          borderRadius: "var(--radius-md)",
-                          fontSize: "0.85rem",
-                          color: "var(--accent-gold)",
-                          fontWeight: "700"
+                          padding: "1.25rem 1.75rem",
+                          backgroundColor: "rgba(0,0,0,0.45)",
+                          borderBottom: "1px solid rgba(255,255,255,0.08)",
+                          display: "flex",
+                          justifyContent: "space-between",
+                          alignItems: "center",
+                          flexWrap: "wrap",
+                          gap: "1rem"
                         }}>
-                          एकूण: {recruit.totalSickDaysInMonth} दिवस | {recruit.totalMissedPeriodsInMonth} Period चुकले
+                          
+                          {/* Left: Recruit Info */}
+                          <div style={{ display: "flex", alignItems: "center", gap: "1rem", flexWrap: "wrap" }}>
+                            <span className="badge badge-gold" style={{ fontSize: "1.1rem", padding: "0.4rem 1rem", letterSpacing: "1px", border: "1px solid var(--accent-gold)" }}>
+                              #{recruit.chestNumber}
+                            </span>
+                            <div>
+                              <div style={{ fontSize: "1.2rem", fontWeight: "700", color: "white" }}>
+                                {recruit.name}
+                              </div>
+                              <div style={{ fontSize: "0.85rem", color: "var(--text-muted)" }}>
+                                घटक (Unit): <strong style={{ color: "white" }}>{recruit.unit}</strong> {recruit.squadNumber ? `| तुकडी (Squad): ${recruit.squadNumber}` : ""}
+                              </div>
+                            </div>
+                          </div>
+
+                          {/* Right: Key Period Badges & Toggle */}
+                          <div style={{ display: "flex", alignItems: "center", gap: "0.75rem", flexWrap: "wrap" }}>
+                            
+                            {/* Period Span Highlights */}
+                            {recruit.periods.map((p, pIdx) => (
+                              <div 
+                                key={p.periodId}
+                                style={{ 
+                                  display: "inline-flex",
+                                  alignItems: "center",
+                                  gap: "0.5rem",
+                                  padding: "0.4rem 0.85rem",
+                                  borderRadius: "var(--radius-md)",
+                                  backgroundColor: "rgba(239,68,68,0.15)",
+                                  border: "1px solid rgba(239,68,68,0.4)",
+                                  color: "#fca5a5",
+                                  fontSize: "0.85rem"
+                                }}
+                              >
+                                <Stethoscope size={15} />
+                                <span>
+                                  <strong>कालावधी {recruit.periods.length > 1 ? `#${pIdx + 1}` : ""}:</strong> {p.formattedStartDate} ते {p.formattedEndDate}
+                                </span>
+                                <span style={{ 
+                                  backgroundColor: "rgba(239,68,68,0.35)", 
+                                  padding: "0.15rem 0.55rem", 
+                                  borderRadius: "4px",
+                                  fontWeight: "700",
+                                  color: "white"
+                                }}>
+                                  {p.totalDays} दिवस ({p.totalMissedPeriods} Period)
+                                </span>
+                              </div>
+                            ))}
+
+                            {/* Overall Totals */}
+                            <div style={{ 
+                              padding: "0.4rem 0.85rem", 
+                              backgroundColor: "rgba(251,191,36,0.12)",
+                              border: "1px solid rgba(251,191,36,0.35)",
+                              borderRadius: "var(--radius-md)",
+                              fontSize: "0.85rem",
+                              color: "var(--accent-gold)",
+                              fontWeight: "700"
+                            }}>
+                              एकूण: {recruit.totalSickDaysInMonth} दिवस | {recruit.totalMissedPeriodsInMonth} Period चुकले
+                            </div>
+
+                            {/* Expand/Collapse Toggle Button */}
+                            <button
+                              type="button"
+                              onClick={() => toggleRecruitExpand(recruit.recruitId)}
+                              style={{
+                                display: "flex",
+                                alignItems: "center",
+                                gap: "0.35rem",
+                                padding: "0.4rem 0.85rem",
+                                borderRadius: "var(--radius-md)",
+                                border: "1px solid rgba(255,255,255,0.2)",
+                                backgroundColor: "rgba(255,255,255,0.06)",
+                                color: "white",
+                                cursor: "pointer",
+                                fontSize: "0.82rem",
+                                transition: "all 0.15s"
+                              }}
+                            >
+                              {isExpanded ? (
+                                <><span>तपशील लपवा</span> <ChevronUp size={16} /></>
+                              ) : (
+                                <><span>Datewise तपशील पहा</span> <ChevronDown size={16} /></>
+                              )}
+                            </button>
+
+                          </div>
                         </div>
 
-                        {/* Expand/Collapse Toggle Button */}
-                        <button
-                          type="button"
-                          onClick={() => toggleRecruitExpand(recruit.recruitId)}
-                          className="no-print"
-                          style={{
-                            display: "flex",
-                            alignItems: "center",
-                            gap: "0.25rem",
-                            padding: "0.4rem 0.75rem",
-                            borderRadius: "var(--radius-md)",
-                            border: "1px solid rgba(255,255,255,0.15)",
-                            backgroundColor: "rgba(255,255,255,0.05)",
-                            color: "white",
-                            cursor: "pointer",
-                            fontSize: "0.8rem",
-                            transition: "all 0.15s"
-                          }}
-                        >
-                          {isExpanded ? (
-                            <><span>तपशील लपवा</span> <ChevronUp size={16} /></>
-                          ) : (
-                            <><span>Datewise तपशील पहा</span> <ChevronDown size={16} /></>
-                          )}
-                        </button>
-
-                      </div>
-                    </div>
-
-                    {/* Reasons summary strip */}
-                    <div style={{ 
-                      padding: "0.75rem 1.75rem", 
-                      backgroundColor: "rgba(255,255,255,0.02)",
-                      borderBottom: "1px solid rgba(255,255,255,0.05)",
-                      display: "flex",
-                      alignItems: "center",
-                      gap: "0.75rem",
-                      flexWrap: "wrap",
-                      fontSize: "0.85rem"
-                    }}>
-                      <span style={{ color: "var(--text-muted)", fontWeight: "600" }}>
-                        आजारपण कारणे (Illness Reasons):
-                      </span>
-                      {Array.from(new Set(recruit.periods.flatMap(p => p.reasons))).map((rs, i) => (
-                        <span 
-                          key={i}
-                          style={{ 
-                            backgroundColor: "rgba(239,68,68,0.1)", 
-                            color: "#fecaca", 
-                            padding: "0.2rem 0.6rem", 
-                            borderRadius: "4px",
-                            border: "1px solid rgba(239,68,68,0.2)"
-                          }}
-                        >
-                          "{rs}"
-                        </span>
-                      ))}
-                    </div>
-
-                    {/* Datewise Detailed Table (सर्व सोबत datewise) */}
-                    {isExpanded && (
-                      <div style={{ padding: "1.5rem 1.75rem", overflowX: "auto" }}>
+                        {/* Reasons summary strip */}
                         <div style={{ 
-                          marginBottom: "0.75rem", 
-                          fontSize: "0.9rem", 
-                          fontWeight: "700", 
-                          color: "var(--accent-gold)",
+                          padding: "0.75rem 1.75rem", 
+                          backgroundColor: "rgba(255,255,255,0.02)",
+                          borderBottom: "1px solid rgba(255,255,255,0.05)",
                           display: "flex",
                           alignItems: "center",
-                          gap: "0.5rem"
+                          gap: "0.75rem",
+                          flexWrap: "wrap",
+                          fontSize: "0.85rem"
                         }}>
-                          <Clock size={16} /> सर्व दिवसनिहाय उपस्थिती नोंद (All Datewise Logs):
+                          <span style={{ color: "var(--text-muted)", fontWeight: "600" }}>
+                            आजारपण कारणे (Illness Reasons):
+                          </span>
+                          {Array.from(new Set(recruit.periods.flatMap(p => p.reasons))).map((rs, i) => (
+                            <span 
+                              key={i}
+                              style={{ 
+                                backgroundColor: "rgba(239,68,68,0.12)", 
+                                color: "#fecaca", 
+                                padding: "0.2rem 0.65rem", 
+                                borderRadius: "4px",
+                                border: "1px solid rgba(239,68,68,0.25)",
+                                fontWeight: "500"
+                              }}
+                            >
+                              "{rs}"
+                            </span>
+                          ))}
                         </div>
 
-                        <table style={{ width: "100%", borderCollapse: "collapse", textAlign: "left", fontSize: "0.9rem" }}>
+                        {/* Datewise Detailed Table (सर्व सोबत datewise) */}
+                        {isExpanded && (
+                          <div style={{ padding: "1.5rem 1.75rem", overflowX: "auto" }}>
+                            <div style={{ 
+                              marginBottom: "0.75rem", 
+                              fontSize: "0.9rem", 
+                              fontWeight: "700", 
+                              color: "var(--accent-gold)",
+                              display: "flex",
+                              alignItems: "center",
+                              gap: "0.5rem"
+                            }}>
+                              <Clock size={16} /> सर्व दिवसनिहाय उपस्थिती नोंद (All Datewise Logs):
+                            </div>
+
+                            <table style={{ width: "100%", borderCollapse: "collapse", textAlign: "left", fontSize: "0.9rem" }}>
+                              <thead>
+                                <tr style={{ backgroundColor: "rgba(0,0,0,0.5)" }}>
+                                  <th style={{ padding: "0.75rem 1rem", color: "var(--text-muted)", borderBottom: "1px solid rgba(255,255,255,0.1)", width: "60px" }}>अ.क्र.</th>
+                                  <th style={{ padding: "0.75rem 1rem", color: "var(--text-muted)", borderBottom: "1px solid rgba(255,255,255,0.1)", width: "130px" }}>दिनांक (Date)</th>
+                                  <th style={{ padding: "0.75rem 1rem", color: "var(--text-muted)", borderBottom: "1px solid rgba(255,255,255,0.1)", width: "120px" }}>वार (Day)</th>
+                                  <th style={{ padding: "0.75rem 1rem", color: "var(--text-muted)", borderBottom: "1px solid rgba(255,255,255,0.1)" }}>सकाळ सत्र (Morning Period)</th>
+                                  <th style={{ padding: "0.75rem 1rem", color: "var(--text-muted)", borderBottom: "1px solid rgba(255,255,255,0.1)" }}>दुपार सत्र (Afternoon Period)</th>
+                                  <th style={{ padding: "0.75rem 1rem", color: "var(--text-muted)", borderBottom: "1px solid rgba(255,255,255,0.1)", textAlign: "center", width: "140px" }}>चुकलेले Period</th>
+                                </tr>
+                              </thead>
+                              <tbody>
+                                {recruit.allDatewiseRecords.map((dRec, dIdx) => {
+                                  const isMorningMissed = dRec.morningStatus === "MISSED" || dRec.morningStatus === "LEAVE";
+                                  const isAfternoonMissed = dRec.afternoonStatus === "MISSED" || dRec.afternoonStatus === "LEAVE";
+
+                                  return (
+                                    <tr 
+                                      key={dIdx}
+                                      style={{ 
+                                        borderBottom: "1px solid rgba(255,255,255,0.05)",
+                                        backgroundColor: dIdx % 2 === 0 ? "rgba(255,255,255,0.015)" : "transparent"
+                                      }}
+                                    >
+                                      <td style={{ padding: "0.75rem 1rem", color: "var(--text-muted)" }}>
+                                        {dIdx + 1}
+                                      </td>
+                                      <td style={{ padding: "0.75rem 1rem", fontWeight: "600", color: "white" }}>
+                                        {dRec.formattedDate}
+                                      </td>
+                                      <td style={{ padding: "0.75rem 1rem", color: "var(--text-muted)" }}>
+                                        {dRec.dayName}
+                                      </td>
+                                      <td style={{ padding: "0.75rem 1rem" }}>
+                                        {isMorningMissed ? (
+                                          <div style={{ display: "inline-flex", flexDirection: "column", gap: "0.2rem" }}>
+                                            <span className="badge badge-error" style={{ fontSize: "0.75rem", padding: "0.2rem 0.5rem" }}>
+                                              चुकले / Missed
+                                            </span>
+                                            {dRec.morningReason && (
+                                              <span style={{ fontSize: "0.8rem", color: "#fca5a5", fontStyle: "italic" }}>
+                                                कारण: {dRec.morningReason}
+                                              </span>
+                                            )}
+                                          </div>
+                                        ) : (
+                                          <span className="badge badge-success" style={{ fontSize: "0.75rem", padding: "0.2rem 0.5rem" }}>
+                                            हजर / Present
+                                          </span>
+                                        )}
+                                      </td>
+                                      <td style={{ padding: "0.75rem 1rem" }}>
+                                        {isAfternoonMissed ? (
+                                          <div style={{ display: "inline-flex", flexDirection: "column", gap: "0.2rem" }}>
+                                            <span className="badge badge-error" style={{ fontSize: "0.75rem", padding: "0.2rem 0.5rem" }}>
+                                              चुकले / Missed
+                                            </span>
+                                            {dRec.afternoonReason && (
+                                              <span style={{ fontSize: "0.8rem", color: "#fca5a5", fontStyle: "italic" }}>
+                                                कारण: {dRec.afternoonReason}
+                                              </span>
+                                            )}
+                                          </div>
+                                        ) : (
+                                          <span className="badge badge-success" style={{ fontSize: "0.75rem", padding: "0.2rem 0.5rem" }}>
+                                            हजर / Present
+                                          </span>
+                                        )}
+                                      </td>
+                                      <td style={{ padding: "0.75rem 1rem", textAlign: "center" }}>
+                                        <span style={{ 
+                                          display: "inline-block",
+                                          fontWeight: "800", 
+                                          fontSize: "0.95rem",
+                                          color: dRec.missedPeriodsOnDate > 0 ? "#ef4444" : "#22c55e",
+                                          backgroundColor: dRec.missedPeriodsOnDate > 0 ? "rgba(239,68,68,0.15)" : "rgba(34,197,94,0.15)",
+                                          padding: "0.2rem 0.75rem",
+                                          borderRadius: "12px"
+                                        }}>
+                                          {dRec.missedPeriodsOnDate} Period
+                                        </span>
+                                      </td>
+                                    </tr>
+                                  );
+                                })}
+                              </tbody>
+                              <tfoot>
+                                <tr style={{ backgroundColor: "rgba(0,0,0,0.55)", fontWeight: "700" }}>
+                                  <td colSpan={3} style={{ padding: "0.75rem 1rem", color: "var(--accent-gold)" }}>
+                                    एकूण सारांश (Total Summary)
+                                  </td>
+                                  <td colSpan={2} style={{ padding: "0.75rem 1rem", color: "white" }}>
+                                    {recruit.periods.length} आजारी कालावधी ({recruit.totalSickDaysInMonth} दिवस)
+                                  </td>
+                                  <td style={{ padding: "0.75rem 1rem", textAlign: "center", color: "#fca5a5", fontSize: "1rem" }}>
+                                    {recruit.totalMissedPeriodsInMonth} Periods
+                                  </td>
+                                </tr>
+                              </tfoot>
+                            </table>
+                          </div>
+                        )}
+
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
+
+              {/* ========================================================
+                  VIEW B: OFFICIAL BOXED PRINT REGISTER DOCUMENT
+                  (Always printed via window.print(), and also displayed 
+                   on screen when sickDisplayMode === "PREVIEW")
+                  ======================================================== */}
+              <div 
+                className="official-print-document" 
+                style={sickDisplayMode === "PREVIEW" ? {
+                  backgroundColor: "#ffffff",
+                  color: "#000000",
+                  padding: "2.5rem 3rem",
+                  borderRadius: "8px",
+                  boxShadow: "0 10px 40px rgba(0,0,0,0.7)",
+                  margin: "1rem auto 3rem",
+                  maxWidth: "1250px",
+                  border: "2px solid #333333"
+                } : undefined}
+              >
+                {/* On-screen Preview Banner */}
+                {sickDisplayMode === "PREVIEW" && (
+                  <div className="no-print" style={{ 
+                    display: "flex", 
+                    justifyContent: "space-between", 
+                    alignItems: "center", 
+                    backgroundColor: "#1e293b", 
+                    color: "white", 
+                    padding: "0.75rem 1.25rem", 
+                    borderRadius: "6px", 
+                    marginBottom: "1.75rem" 
+                  }}>
+                    <div style={{ display: "flex", alignItems: "center", gap: "0.5rem", fontSize: "0.95rem" }}>
+                      <FileText size={18} color="var(--accent-gold)" />
+                      <span><strong>अधिकृत नोंदवही मुद्रण प्रिव्ह्यू (Official Print Preview):</strong> हा तक्ता छपाईसाठी (Print) बॉक्स स्वरूपात तयार केला आहे.</span>
+                    </div>
+                    <button 
+                      onClick={() => window.print()}
+                      className="btn"
+                      style={{ 
+                        backgroundColor: "var(--accent-gold)", 
+                        color: "#000", 
+                        fontWeight: "700", 
+                        padding: "0.4rem 1rem",
+                        fontSize: "0.85rem",
+                        display: "flex",
+                        alignItems: "center",
+                        gap: "0.4rem"
+                      }}
+                    >
+                      <Printer size={16} /> प्रिंट करा (Print Now)
+                    </button>
+                  </div>
+                )}
+
+                {/* 1. Official Government Header Box */}
+                <div style={{ 
+                  border: "2px solid #000000", 
+                  padding: "12px 18px", 
+                  marginBottom: "14px", 
+                  display: "flex", 
+                  alignItems: "center", 
+                  justifyContent: "space-between", 
+                  gap: "16px" 
+                }}>
+                  <div style={{ width: "80px", textAlign: "center", flexShrink: 0 }}>
+                    <img 
+                      src="/logo.png" 
+                      alt="PTC Akola Logo" 
+                      style={{ width: "70px", height: "auto", display: "inline-block" }} 
+                    />
+                  </div>
+
+                  <div style={{ textAlign: "center", flex: 1 }}>
+                    <div style={{ fontSize: "11px", fontWeight: "700", letterSpacing: "1.5px", color: "#333333", textTransform: "uppercase" }}>
+                      महाराष्ट्र शासन / GOVERNMENT OF MAHARASHTRA
+                    </div>
+                    <div style={{ fontSize: "19px", fontWeight: "900", margin: "2px 0", color: "#000000", letterSpacing: "0.5px" }}>
+                      पोलीस प्रशिक्षण केंद्र, अकोला
+                    </div>
+                    <div style={{ fontSize: "13px", fontWeight: "800", color: "#111111", letterSpacing: "0.5px" }}>
+                      POLICE TRAINING CENTRE, AKOLA
+                    </div>
+                    <div style={{ 
+                      fontSize: "13.5px", 
+                      fontWeight: "800", 
+                      marginTop: "6px", 
+                      color: "#000000",
+                      borderTop: "1px solid #000000",
+                      borderBottom: "1px solid #000000",
+                      padding: "3px 0",
+                      display: "inline-block"
+                    }}>
+                      प्रशिक्षणार्थी आजारी कालावधी व चुकवलेले Period मासिक नोंदवही / अहवाल
+                    </div>
+                    <div style={{ fontSize: "10.5px", fontWeight: "700", color: "#333333", marginTop: "2px" }}>
+                      OFFICIAL REGISTER OF SICK PERIODS & MISSED TRAINING SESSIONS
+                    </div>
+                  </div>
+
+                  <div style={{ width: "100px", textAlign: "right", fontSize: "10px", color: "#333333", flexShrink: 0, lineHeight: "1.4" }}>
+                    <div><strong>नोंदवही क्र.:</strong></div>
+                    <div style={{ fontWeight: "700" }}>PTC/ATT/{selectedYear}</div>
+                    <div style={{ marginTop: "4px" }}><strong>शाखा:</strong> हजेरी</div>
+                  </div>
+                </div>
+
+                {/* 2. Official Boxed Metadata & Scope Table */}
+                {sickReportData && (
+                  <table style={{ 
+                    width: "100%", 
+                    borderCollapse: "collapse", 
+                    border: "2px solid #000000", 
+                    marginBottom: "16px", 
+                    fontSize: "11px" 
+                  }}>
+                    <tbody>
+                      <tr style={{ backgroundColor: "#f1f5f9" }}>
+                        <td style={{ border: "1px solid #000000", padding: "6px 10px", fontWeight: "700", width: "22%" }}>
+                          अहवाल कालावधी (Scope):
+                        </td>
+                        <td style={{ border: "1px solid #000000", padding: "6px 10px", fontWeight: "900", width: "28%", color: "#000000" }}>
+                          {sickReportData.formattedQueryStartDate} ते {sickReportData.formattedQueryEndDate}
+                        </td>
+                        <td style={{ border: "1px solid #000000", padding: "6px 10px", fontWeight: "700", width: "22%" }}>
+                          एकूण आजारी प्रशिक्षणार्थी:
+                        </td>
+                        <td style={{ border: "1px solid #000000", padding: "6px 10px", fontWeight: "900", width: "28%", color: "#000000" }}>
+                          {sickReportData.summary.totalRecruitsAffected} प्रशिक्षणार्थी
+                        </td>
+                      </tr>
+                      <tr>
+                        <td style={{ border: "1px solid #000000", padding: "6px 10px", fontWeight: "700" }}>
+                          एकूण आजारी दिवस (Cumulative Days):
+                        </td>
+                        <td style={{ border: "1px solid #000000", padding: "6px 10px", fontWeight: "900", color: "#000000" }}>
+                          {sickReportData.summary.totalSickDays} दिवस (Days)
+                        </td>
+                        <td style={{ border: "1px solid #000000", padding: "6px 10px", fontWeight: "700" }}>
+                          एकूण चुकवलेले Period (Missed):
+                        </td>
+                        <td style={{ border: "1px solid #000000", padding: "6px 10px", fontWeight: "900", color: "#000000" }}>
+                          {sickReportData.summary.totalMissedPeriods} सत्रे (Sessions)
+                        </td>
+                      </tr>
+                      <tr style={{ backgroundColor: "#f8fafc" }}>
+                        <td style={{ border: "1px solid #000000", padding: "6px 10px", fontWeight: "700" }}>
+                          तुकडी मर्यादा (Squad Filter):
+                        </td>
+                        <td style={{ border: "1px solid #000000", padding: "6px 10px" }}>
+                          {selectedSquad === "ALL" ? "सर्व तुकड्या (All Squads)" : `तुकडी क्रमांक ${selectedSquad}`}
+                        </td>
+                        <td style={{ border: "1px solid #000000", padding: "6px 10px", fontWeight: "700" }}>
+                          मुद्रण दिनांक व वेळ (Printed On):
+                        </td>
+                        <td style={{ border: "1px solid #000000", padding: "6px 10px" }}>
+                          {new Date().toLocaleString('en-GB')}
+                        </td>
+                      </tr>
+                    </tbody>
+                  </table>
+                )}
+
+                {/* 3. PART 1: MASTER SICK PERIOD SUMMARY REGISTER (मुख्य सारांश नोंदवही तक्ता) */}
+                <div style={{ marginBottom: "22px" }}>
+                  <div style={{ 
+                    fontSize: "12px", 
+                    fontWeight: "900", 
+                    textTransform: "uppercase", 
+                    marginBottom: "6px", 
+                    borderBottom: "2px solid #000000", 
+                    paddingBottom: "3px",
+                    display: "flex",
+                    justifyContent: "space-between",
+                    alignItems: "center"
+                  }}>
+                    <span>भाग १: आजारी कालावधी मुख्य सारांश नोंदवही तक्ता / PART 1: MASTER SICK PERIOD REGISTER</span>
+                    <span style={{ fontSize: "10.5px", fontWeight: "700" }}>एकूण: {filteredSickRecruits.length} प्रशिक्षणार्थी</span>
+                  </div>
+
+                  <table style={{ 
+                    width: "100%", 
+                    borderCollapse: "collapse", 
+                    border: "2px solid #000000", 
+                    fontSize: "10.5px" 
+                  }}>
+                    <thead>
+                      <tr style={{ backgroundColor: "#e2e8f0" }}>
+                        <th style={{ border: "1px solid #000000", padding: "6px 4px", width: "35px", textAlign: "center" }}>अ.क्र.</th>
+                        <th style={{ border: "1px solid #000000", padding: "6px 6px", width: "65px", textAlign: "center" }}>चेस्ट क्र.</th>
+                        <th style={{ border: "1px solid #000000", padding: "6px 8px", textAlign: "left" }}>प्रशिक्षणार्थी नाव</th>
+                        <th style={{ border: "1px solid #000000", padding: "6px 8px", width: "115px", textAlign: "left" }}>घटक व तुकडी</th>
+                        <th style={{ border: "1px solid #000000", padding: "6px 8px", textAlign: "left" }}>आजारी कालावधी (या तारखेपासून ते या तारखेपर्यंत)</th>
+                        <th style={{ border: "1px solid #000000", padding: "6px 6px", width: "70px", textAlign: "center" }}>एकूण दिवस</th>
+                        <th style={{ border: "1px solid #000000", padding: "6px 6px", width: "80px", textAlign: "center" }}>चुकलेले Period</th>
+                        <th style={{ border: "1px solid #000000", padding: "6px 8px", textAlign: "left" }}>आजारपण / कारण</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {filteredSickRecruits.map((r, idx) => (
+                        <tr key={r.recruitId} style={{ backgroundColor: idx % 2 === 1 ? "#f8fafc" : "#ffffff" }}>
+                          <td style={{ border: "1px solid #000000", padding: "5px 4px", textAlign: "center" }}>{idx + 1}</td>
+                          <td style={{ border: "1px solid #000000", padding: "5px 6px", textAlign: "center", fontWeight: "800" }}>#{r.chestNumber}</td>
+                          <td style={{ border: "1px solid #000000", padding: "5px 8px", fontWeight: "700" }}>{r.name}</td>
+                          <td style={{ border: "1px solid #000000", padding: "5px 8px" }}>{r.unit} {r.squadNumber ? `(Sq. ${r.squadNumber})` : ''}</td>
+                          <td style={{ border: "1px solid #000000", padding: "5px 8px" }}>
+                            {r.periods.map((p, pIdx) => (
+                              <div key={p.periodId} style={{ marginBottom: pIdx < r.periods.length - 1 ? "2px" : 0 }}>
+                                <strong>{p.formattedStartDate} ते {p.formattedEndDate}</strong> ({p.totalDays} दिवस)
+                              </div>
+                            ))}
+                          </td>
+                          <td style={{ border: "1px solid #000000", padding: "5px 6px", textAlign: "center", fontWeight: "800" }}>
+                            {r.totalSickDaysInMonth} दिवस
+                          </td>
+                          <td style={{ border: "1px solid #000000", padding: "5px 6px", textAlign: "center", fontWeight: "800" }}>
+                            {r.totalMissedPeriodsInMonth} Period
+                          </td>
+                          <td style={{ border: "1px solid #000000", padding: "5px 8px" }}>
+                            {Array.from(new Set(r.periods.flatMap(p => p.reasons))).join(", ") || "आजारी"}
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                    <tfoot>
+                      <tr style={{ backgroundColor: "#e2e8f0", fontWeight: "800" }}>
+                        <td colSpan={5} style={{ border: "1px solid #000000", padding: "6px 8px", textAlign: "right" }}>
+                          एकूण बेरीज (Grand Total):
+                        </td>
+                        <td style={{ border: "1px solid #000000", padding: "6px 6px", textAlign: "center" }}>
+                          {sickReportData?.summary.totalSickDays} दिवस
+                        </td>
+                        <td style={{ border: "1px solid #000000", padding: "6px 6px", textAlign: "center" }}>
+                          {sickReportData?.summary.totalMissedPeriods} Period
+                        </td>
+                        <td style={{ border: "1px solid #000000", padding: "6px 8px" }}>
+                          {filteredSickRecruits.length} प्रशिक्षणार्थी
+                        </td>
+                      </tr>
+                    </tfoot>
+                  </table>
+                </div>
+
+                {/* 4. PART 2: RECRUIT-WISE ALL DATEWISE LOGS (प्रशिक्षणार्थीनिहाय सविस्तर दिवसनिहाय नोंदवही) */}
+                <div style={{ marginTop: "26px" }}>
+                  <div style={{ 
+                    fontSize: "12px", 
+                    fontWeight: "900", 
+                    textTransform: "uppercase", 
+                    marginBottom: "8px", 
+                    borderBottom: "2px solid #000000", 
+                    paddingBottom: "3px" 
+                  }}>
+                    भाग २: प्रशिक्षणार्थीनिहाय सविस्तर दिवसनिहाय नोंदवही / PART 2: RECRUIT-WISE DETAILED DATEWISE LOGS
+                  </div>
+
+                  <div style={{ display: "flex", flexDirection: "column", gap: "22px" }}>
+                    {filteredSickRecruits.map((recruit) => (
+                      <div 
+                        key={recruit.recruitId}
+                        style={{ 
+                          border: "2px solid #000000", 
+                          pageBreakInside: "avoid", 
+                          breakInside: "avoid",
+                          backgroundColor: "#ffffff"
+                        }}
+                      >
+                        {/* Shaded Boxed Header for Recruit */}
+                        <div style={{ 
+                          backgroundColor: "#f1f5f9", 
+                          borderBottom: "1.5px solid #000000", 
+                          padding: "8px 12px",
+                          lineHeight: "1.4"
+                        }}>
+                          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: "6px" }}>
+                            <div>
+                              <span style={{ fontSize: "13px", fontWeight: "900", marginRight: "12px" }}>
+                                चेस्ट क्रमांक: #{recruit.chestNumber}
+                              </span>
+                              <span style={{ fontSize: "13px", fontWeight: "800", marginRight: "12px" }}>
+                                नाव: {recruit.name}
+                              </span>
+                              <span style={{ fontSize: "11px", fontWeight: "600", color: "#333333" }}>
+                                घटक: <strong>{recruit.unit}</strong> {recruit.squadNumber ? `| तुकडी: Squad ${recruit.squadNumber}` : ''}
+                              </span>
+                            </div>
+                            <div style={{ fontSize: "11px", fontWeight: "800" }}>
+                              एकूण: <span style={{ textDecoration: "underline" }}>{recruit.totalSickDaysInMonth} दिवस</span> | <span style={{ textDecoration: "underline" }}>{recruit.totalMissedPeriodsInMonth} Period चुकले</span>
+                            </div>
+                          </div>
+
+                          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: "6px", marginTop: "4px", fontSize: "10.5px" }}>
+                            <div>
+                              <strong>नोंदवलेला आजारी कालावधी:</strong>{" "}
+                              {recruit.periods.map(p => `${p.formattedStartDate} ते ${p.formattedEndDate} (${p.totalDays} दिवस, ${p.totalMissedPeriods} Period चुकले)`).join("; ")}
+                            </div>
+                            <div>
+                              <strong>आजारपण कारणे:</strong>{" "}
+                              {Array.from(new Set(recruit.periods.flatMap(p => p.reasons))).join(", ") || "आजारी"}
+                            </div>
+                          </div>
+                        </div>
+
+                        {/* Solid Boxed Datewise Table for Recruit */}
+                        <table style={{ 
+                          width: "100%", 
+                          borderCollapse: "collapse", 
+                          fontSize: "10px",
+                          textAlign: "left"
+                        }}>
                           <thead>
-                            <tr style={{ backgroundColor: "rgba(0,0,0,0.4)" }}>
-                              <th style={{ padding: "0.75rem 1rem", color: "var(--text-muted)", borderBottom: "1px solid rgba(255,255,255,0.1)", width: "60px" }}>अ.क्र.</th>
-                              <th style={{ padding: "0.75rem 1rem", color: "var(--text-muted)", borderBottom: "1px solid rgba(255,255,255,0.1)", width: "130px" }}>दिनांक (Date)</th>
-                              <th style={{ padding: "0.75rem 1rem", color: "var(--text-muted)", borderBottom: "1px solid rgba(255,255,255,0.1)", width: "120px" }}>वार (Day)</th>
-                              <th style={{ padding: "0.75rem 1rem", color: "var(--text-muted)", borderBottom: "1px solid rgba(255,255,255,0.1)" }}>सकाळ सत्र (Morning Period)</th>
-                              <th style={{ padding: "0.75rem 1rem", color: "var(--text-muted)", borderBottom: "1px solid rgba(255,255,255,0.1)" }}>दुपार सत्र (Afternoon Period)</th>
-                              <th style={{ padding: "0.75rem 1rem", color: "var(--text-muted)", borderBottom: "1px solid rgba(255,255,255,0.1)", textAlign: "center", width: "140px" }}>चुकलेले Period</th>
+                            <tr style={{ backgroundColor: "#e2e8f0" }}>
+                              <th style={{ border: "1px solid #000000", padding: "5px 6px", width: "35px", textAlign: "center" }}>अ.क्र.</th>
+                              <th style={{ border: "1px solid #000000", padding: "5px 8px", width: "95px", textAlign: "center" }}>दिनांक (Date)</th>
+                              <th style={{ border: "1px solid #000000", padding: "5px 8px", width: "85px", textAlign: "center" }}>वार (Day)</th>
+                              <th style={{ border: "1px solid #000000", padding: "5px 8px" }}>सकाळ सत्र (Morning Period)</th>
+                              <th style={{ border: "1px solid #000000", padding: "5px 8px" }}>दुपार सत्र (Afternoon Period)</th>
+                              <th style={{ border: "1px solid #000000", padding: "5px 8px", width: "100px", textAlign: "center" }}>दिवसभरात चुकलेले</th>
                             </tr>
                           </thead>
                           <tbody>
@@ -884,96 +1414,122 @@ export default function AttendanceViewerClient() {
                               const isAfternoonMissed = dRec.afternoonStatus === "MISSED" || dRec.afternoonStatus === "LEAVE";
 
                               return (
-                                <tr 
-                                  key={dIdx}
-                                  style={{ 
-                                    borderBottom: "1px solid rgba(255,255,255,0.04)",
-                                    backgroundColor: dIdx % 2 === 0 ? "rgba(255,255,255,0.01)" : "transparent"
-                                  }}
-                                >
-                                  <td style={{ padding: "0.75rem 1rem", color: "var(--text-muted)" }}>
+                                <tr key={dIdx} style={{ backgroundColor: dIdx % 2 === 1 ? "#fafafa" : "#ffffff" }}>
+                                  <td style={{ border: "1px solid #000000", padding: "5px 6px", textAlign: "center" }}>
                                     {dIdx + 1}
                                   </td>
-                                  <td style={{ padding: "0.75rem 1rem", fontWeight: "600", color: "white" }}>
+                                  <td style={{ border: "1px solid #000000", padding: "5px 8px", textAlign: "center", fontWeight: "700" }}>
                                     {dRec.formattedDate}
                                   </td>
-                                  <td style={{ padding: "0.75rem 1rem", color: "var(--text-muted)" }}>
+                                  <td style={{ border: "1px solid #000000", padding: "5px 8px", textAlign: "center" }}>
                                     {dRec.dayName}
                                   </td>
-                                  <td style={{ padding: "0.75rem 1rem" }}>
+                                  <td style={{ border: "1px solid #000000", padding: "5px 8px" }}>
                                     {isMorningMissed ? (
-                                      <div style={{ display: "inline-flex", flexDirection: "column", gap: "0.2rem" }}>
-                                        <span className="badge badge-error" style={{ fontSize: "0.75rem", padding: "0.2rem 0.5rem" }}>
-                                          चुकले / Missed
-                                        </span>
-                                        {dRec.morningReason && (
-                                          <span style={{ fontSize: "0.8rem", color: "#fca5a5", fontStyle: "italic" }}>
-                                            कारण: {dRec.morningReason}
-                                          </span>
-                                        )}
-                                      </div>
-                                    ) : (
-                                      <span className="badge badge-success" style={{ fontSize: "0.75rem", padding: "0.2rem 0.5rem" }}>
-                                        हजर / Present
+                                      <span>
+                                        <strong>[X] चुकले</strong> {dRec.morningReason ? `- कारण: ${dRec.morningReason}` : ''}
                                       </span>
+                                    ) : (
+                                      <span style={{ color: "#333333" }}>[✓] हजर / Present</span>
                                     )}
                                   </td>
-                                  <td style={{ padding: "0.75rem 1rem" }}>
+                                  <td style={{ border: "1px solid #000000", padding: "5px 8px" }}>
                                     {isAfternoonMissed ? (
-                                      <div style={{ display: "inline-flex", flexDirection: "column", gap: "0.2rem" }}>
-                                        <span className="badge badge-error" style={{ fontSize: "0.75rem", padding: "0.2rem 0.5rem" }}>
-                                          चुकले / Missed
-                                        </span>
-                                        {dRec.afternoonReason && (
-                                          <span style={{ fontSize: "0.8rem", color: "#fca5a5", fontStyle: "italic" }}>
-                                            कारण: {dRec.afternoonReason}
-                                          </span>
-                                        )}
-                                      </div>
-                                    ) : (
-                                      <span className="badge badge-success" style={{ fontSize: "0.75rem", padding: "0.2rem 0.5rem" }}>
-                                        हजर / Present
+                                      <span>
+                                        <strong>[X] चुकले</strong> {dRec.afternoonReason ? `- कारण: ${dRec.afternoonReason}` : ''}
                                       </span>
+                                    ) : (
+                                      <span style={{ color: "#333333" }}>[✓] हजर / Present</span>
                                     )}
                                   </td>
-                                  <td style={{ padding: "0.75rem 1rem", textAlign: "center" }}>
-                                    <span style={{ 
-                                      display: "inline-block",
-                                      fontWeight: "800", 
-                                      fontSize: "0.95rem",
-                                      color: dRec.missedPeriodsOnDate > 0 ? "#ef4444" : "#22c55e",
-                                      backgroundColor: dRec.missedPeriodsOnDate > 0 ? "rgba(239,68,68,0.15)" : "rgba(34,197,94,0.15)",
-                                      padding: "0.2rem 0.75rem",
-                                      borderRadius: "12px"
-                                    }}>
-                                      {dRec.missedPeriodsOnDate} Period
-                                    </span>
+                                  <td style={{ border: "1px solid #000000", padding: "5px 8px", textAlign: "center", fontWeight: "800" }}>
+                                    {dRec.missedPeriodsOnDate > 0 ? `${dRec.missedPeriodsOnDate} Period चुकले` : '० Period'}
                                   </td>
                                 </tr>
                               );
                             })}
                           </tbody>
                           <tfoot>
-                            <tr style={{ backgroundColor: "rgba(0,0,0,0.5)", fontWeight: "700" }}>
-                              <td colSpan={3} style={{ padding: "0.75rem 1rem", color: "var(--accent-gold)" }}>
-                                एकूण सारांश (Total Summary)
+                            <tr style={{ backgroundColor: "#f1f5f9", fontWeight: "800" }}>
+                              <td colSpan={3} style={{ border: "1px solid #000000", padding: "5px 8px", textAlign: "right" }}>
+                                एकूण (Total For Recruit):
                               </td>
-                              <td colSpan={2} style={{ padding: "0.75rem 1rem", color: "white" }}>
-                                {recruit.periods.length} आजारी कालावधी (Sick Periods)
+                              <td colSpan={2} style={{ border: "1px solid #000000", padding: "5px 8px" }}>
+                                {recruit.totalSickDaysInMonth} दिवस आजारी
                               </td>
-                              <td style={{ padding: "0.75rem 1rem", textAlign: "center", color: "#fca5a5", fontSize: "1rem" }}>
-                                {recruit.totalMissedPeriodsInMonth} Periods
+                              <td style={{ border: "1px solid #000000", padding: "5px 8px", textAlign: "center" }}>
+                                {recruit.totalMissedPeriodsInMonth} Period चुकले
                               </td>
                             </tr>
                           </tfoot>
                         </table>
                       </div>
-                    )}
-
+                    ))}
                   </div>
-                );
-              })}
-            </div>
+                </div>
+
+                {/* 5. PART 3: OFFICIAL VERIFICATION & SIGNATURES BLOCK (अधिकृत पडताळणी व स्वाक्षरी चौकट) */}
+                <div style={{ marginTop: "28px", pageBreakInside: "avoid", breakInside: "avoid" }}>
+                  <table style={{ 
+                    width: "100%", 
+                    borderCollapse: "collapse", 
+                    border: "2px solid #000000", 
+                    textAlign: "center" 
+                  }}>
+                    <thead>
+                      <tr style={{ backgroundColor: "#e2e8f0" }}>
+                        <th style={{ border: "1px solid #000000", padding: "8px", width: "33.33%", fontSize: "11px", fontWeight: "800" }}>
+                          हजेरी कारकून / हजेरी अंमलदार
+                          <div style={{ fontSize: "9.5px", fontWeight: "normal", color: "#333333" }}>
+                            ATTENDANCE IN-CHARGE / WRITER
+                          </div>
+                        </th>
+                        <th style={{ border: "1px solid #000000", padding: "8px", width: "33.33%", fontSize: "11px", fontWeight: "800" }}>
+                          वैद्यकीय अधिकारी
+                          <div style={{ fontSize: "9.5px", fontWeight: "normal", color: "#333333" }}>
+                            MEDICAL OFFICER (POLICE HOSPITAL)
+                          </div>
+                        </th>
+                        <th style={{ border: "1px solid #000000", padding: "8px", width: "33.33%", fontSize: "11px", fontWeight: "800" }}>
+                          प्राचार्य / पोलीस अधीक्षक
+                          <div style={{ fontSize: "9.5px", fontWeight: "normal", color: "#333333" }}>
+                            PRINCIPAL / SP, PTC AKOLA
+                          </div>
+                        </th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      <tr>
+                        <td style={{ border: "1px solid #000000", padding: "45px 10px 10px 10px", verticalAlign: "bottom", fontSize: "10px" }}>
+                          <div style={{ borderTop: "1px dotted #000000", paddingTop: "5px" }}>
+                            स्वाक्षरी व नाव / Signature & Name<br />
+                            दिनांक / Date: _________________
+                          </div>
+                        </td>
+                        <td style={{ border: "1px solid #000000", padding: "45px 10px 10px 10px", verticalAlign: "bottom", fontSize: "10px" }}>
+                          <div style={{ borderTop: "1px dotted #000000", paddingTop: "5px" }}>
+                            स्वाक्षरी, शिक्का व नाव / Seal & Signature<br />
+                            दिनांक / Date: _________________
+                          </div>
+                        </td>
+                        <td style={{ border: "1px solid #000000", padding: "45px 10px 10px 10px", verticalAlign: "bottom", fontSize: "10px" }}>
+                          <div style={{ borderTop: "1px dotted #000000", paddingTop: "5px" }}>
+                            स्वाक्षरी, शिक्का व नाव / Seal & Signature<br />
+                            दिनांक / Date: _________________
+                          </div>
+                        </td>
+                      </tr>
+                    </tbody>
+                  </table>
+
+                  <div style={{ marginTop: "8px", fontSize: "10px", color: "#555555", display: "flex", justifyContent: "space-between" }}>
+                    <span>पोलीस प्रशिक्षण केंद्र, अकोला | हजेरी व आजारी कालावधी नोंदवही</span>
+                    <span>संगणकीय प्रमाणित प्रत (System Generated Certified Copy)</span>
+                  </div>
+                </div>
+
+              </div>
+            </>
           )}
 
         </div>
@@ -1235,6 +1791,15 @@ export default function AttendanceViewerClient() {
           )}
         </div>
       )}
+
+      {/* Sick Leave Registration Modal */}
+      <RegisterSickLeaveModal
+        isOpen={showSickLeaveModal}
+        onClose={() => setShowSickLeaveModal(false)}
+        onSuccess={() => {
+          fetchSickReport();
+        }}
+      />
 
     </div>
   );

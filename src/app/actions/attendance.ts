@@ -847,14 +847,14 @@ export async function getMonthlySickPeriodReport(params?: {
 export async function registerSickPeriod(formData: FormData) {
   try {
     const session = await getSession();
-    if (!session || session.role !== "OFFICER") {
+    if (!session || (session.role !== "OFFICER" && session.role !== "ADMIN")) {
       return { success: false, error: "Unauthorized" };
     }
 
     const recruitId = formData.get("recruitId") as string;
     const startDateStr = formData.get("startDate") as string;
     const endDateStr = formData.get("endDate") as string;
-    const reason = (formData.get("reason") as string) || "आजारी / Sick";
+    const reason = (formData.get("reason") as string)?.trim() || "आजारी / Sick";
     const sessionScope = (formData.get("sessionScope") as string) || "BOTH";
 
     if (!recruitId || !startDateStr || !endDateStr) {
@@ -867,6 +867,16 @@ export async function registerSickPeriod(formData: FormData) {
     if (start > end) {
       return { success: false, error: "Start date cannot be after end date." };
     }
+
+    // Also register into Leave table for record tracking
+    await prisma.leave.create({
+      data: {
+        recruitId,
+        startDate: start,
+        endDate: end,
+        reason: `आजारी रजा / Sick Period: ${reason}`
+      }
+    });
 
     const current = new Date(start);
     while (current <= end) {
@@ -907,10 +917,122 @@ export async function registerSickPeriod(formData: FormData) {
     revalidatePath("/officer/attendance");
     revalidatePath("/attendance-viewer");
     revalidatePath("/directory");
+    revalidatePath(`/directory/${recruitId}`);
+    revalidatePath(`/directory/${recruitId}/report`);
     return { success: true };
   } catch (error) {
     console.error("Register sick period failed", error);
     return { success: false, error: "Failed to register sick period." };
+  }
+}
+
+export async function registerSickLeave(formData: FormData) {
+  try {
+    const session = await getSession();
+    if (!session || (session.role !== "OFFICER" && session.role !== "ADMIN")) {
+      return { success: false, error: "Unauthorized" };
+    }
+
+    const recruitId = formData.get("recruitId") as string;
+    const startDateStr = formData.get("startDate") as string;
+    const endDateStr = formData.get("endDate") as string;
+    const reason = (formData.get("reason") as string)?.trim() || "आजारी रजा / Sick Leave";
+    const sessionScope = (formData.get("sessionScope") as string) || "BOTH";
+
+    if (!recruitId || !startDateStr || !endDateStr) {
+      return { success: false, error: "प्रशिक्षणार्थी, सुरू तारीख व शेवट तारीख आवश्यक आहेत (Recruit, start date and end date are required)." };
+    }
+
+    const start = new Date(startDateStr + "T00:00:00.000Z");
+    const end = new Date(endDateStr + "T00:00:00.000Z");
+
+    if (start > end) {
+      return { success: false, error: "सुरू तारीख शेवटच्या तारखेनंतर असू शकत नाही (Start date cannot be after end date)." };
+    }
+
+    // 1. Create official leave entry in Leave table
+    await prisma.leave.create({
+      data: {
+        recruitId,
+        startDate: start,
+        endDate: end,
+        reason: `आजारी रजा / Sick Leave: ${reason}`
+      }
+    });
+
+    // 2. Upsert each date into Attendance records so it impacts daily session & monthly sick report
+    const current = new Date(start);
+    while (current <= end) {
+      const dateToSave = new Date(current);
+
+      const updateData: any = {};
+      const createData: any = {
+        recruitId,
+        date: dateToSave,
+        morningStatus: "PRESENT",
+        morningReason: null,
+        afternoonStatus: "PRESENT",
+        afternoonReason: null,
+      };
+
+      if (sessionScope === "BOTH" || sessionScope === "MORNING") {
+        updateData.morningStatus = "LEAVE";
+        updateData.morningReason = reason;
+        createData.morningStatus = "LEAVE";
+        createData.morningReason = reason;
+      }
+      if (sessionScope === "BOTH" || sessionScope === "AFTERNOON") {
+        updateData.afternoonStatus = "LEAVE";
+        updateData.afternoonReason = reason;
+        createData.afternoonStatus = "LEAVE";
+        createData.afternoonReason = reason;
+      }
+
+      await prisma.attendance.upsert({
+        where: { recruitId_date: { recruitId, date: dateToSave } },
+        update: updateData,
+        create: createData,
+      });
+
+      current.setUTCDate(current.getUTCDate() + 1);
+    }
+
+    revalidatePath("/officer/attendance");
+    revalidatePath("/attendance-viewer");
+    revalidatePath("/directory");
+    revalidatePath(`/directory/${recruitId}`);
+    revalidatePath(`/directory/${recruitId}/report`);
+    return { success: true };
+  } catch (error) {
+    console.error("Register sick leave failed", error);
+    return { success: false, error: "Failed to register sick leave." };
+  }
+}
+
+export async function getAllRecruitsForSickLeave() {
+  try {
+    const recruits = await prisma.recruit.findMany({
+      select: {
+        id: true,
+        name: true,
+        chestNumber: true,
+        unit: true,
+        squadNumber: true,
+      },
+      orderBy: { chestNumber: "asc" }
+    });
+
+    recruits.sort((a, b) => {
+      const numA = parseInt(a.chestNumber.replace(/\D/g, '')) || 0;
+      const numB = parseInt(b.chestNumber.replace(/\D/g, '')) || 0;
+      if (numA !== numB) return numA - numB;
+      return a.chestNumber.localeCompare(b.chestNumber);
+    });
+
+    return { success: true, recruits };
+  } catch (error) {
+    console.error("Failed to fetch recruits for sick leave", error);
+    return { success: false, recruits: [] };
   }
 }
 

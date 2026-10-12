@@ -4,6 +4,7 @@ import Link from "next/link";
 import { User, MapPin, Target, Calendar, Phone, Droplet, Activity, Printer, Award, Shield, FileText, Edit, Stethoscope } from "lucide-react";
 import DeleteEvaluationButton from "@/components/DeleteEvaluationButton";
 import DeleteRecruitButton from "@/components/DeleteRecruitButton";
+import RegisterSickLeaveButton from "@/components/RegisterSickLeaveButton";
 
 export default async function RecruitProfile({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
@@ -13,6 +14,7 @@ export default async function RecruitProfile({ params }: { params: Promise<{ id:
     include: {
       batch: true,
       attendances: { orderBy: { date: "desc" } },
+      leaves: { orderBy: { startDate: "desc" } },
       evaluations: { 
         orderBy: [
           { year: "desc" },
@@ -138,6 +140,7 @@ export default async function RecruitProfile({ params }: { params: Promise<{ id:
           <p className="text-muted" style={{ fontSize: "1.1rem" }}>Digital record and performance tracking / डिजिटल माहिती आणि कामगिरीचा मागोवा</p>
         </div>
         <div style={{ display: "flex", gap: "1rem", flexWrap: "wrap", alignItems: "center" }}>
+          <RegisterSickLeaveButton recruit={recruit} />
           <Link href={`/directory/${id}/edit`} className="btn btn-outline" style={{ padding: "0.8rem 1.5rem", fontSize: "1.05rem" }}>
             <Edit size={20} /> Edit Profile / संपादित करा
           </Link>
@@ -367,11 +370,14 @@ export default async function RecruitProfile({ params }: { params: Promise<{ id:
           
           {/* Sick Periods Card */}
           <div className="glass-card" style={{ padding: "0", overflow: "hidden", border: "1px solid rgba(239, 68, 68, 0.3)" }}>
-            <div style={{ padding: "1.25rem 1.5rem", borderBottom: "1px solid rgba(255,255,255,0.1)", backgroundColor: "rgba(239,68,68,0.1)", display: "flex", alignItems: "center", gap: "0.5rem" }}>
-              <Stethoscope size={20} color="#ef4444" />
-              <h2 style={{ fontSize: "1.15rem", fontWeight: "700", color: "#fca5a5", margin: 0 }}>
-                आजारी कालावधी / SICK PERIOD(S)
-              </h2>
+            <div style={{ padding: "1.25rem 1.5rem", borderBottom: "1px solid rgba(255,255,255,0.1)", backgroundColor: "rgba(239,68,68,0.1)", display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: "0.5rem" }}>
+              <div style={{ display: "flex", alignItems: "center", gap: "0.5rem" }}>
+                <Stethoscope size={20} color="#ef4444" />
+                <h2 style={{ fontSize: "1.15rem", fontWeight: "700", color: "#fca5a5", margin: 0 }}>
+                  आजारी कालावधी / SICK PERIOD(S)
+                </h2>
+              </div>
+              <RegisterSickLeaveButton recruit={recruit} />
             </div>
             <div style={{ padding: "1.25rem 1.5rem" }}>
               {profileSickPeriods.length === 0 ? (

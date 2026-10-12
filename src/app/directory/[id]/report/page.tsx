@@ -34,6 +34,7 @@ export default async function RecruitReport({ params }: { params: Promise<{ id: 
     include: {
       batch: true,
       attendances: { orderBy: { date: "desc" } },
+      leaves: { orderBy: { startDate: "desc" } },
       evaluations: { 
         orderBy: [
           { year: "desc" },
@@ -568,100 +569,166 @@ export default async function RecruitReport({ params }: { params: Promise<{ id: 
           ))
         )}
 
-        {/* 6. Attendance */}
-        <div className="section-title">मासिक हजेरी विश्लेषण / ATTENDANCE ANALYTICS</div>
-        <div className="data-grid grid-4">
-          <div className="data-item" style={{ textAlign: "center" }}>
+        {/* 6. Attendance & Sick Leave Analytics */}
+        <div className="section-title">मासिक हजेरी व आजारी कालावधी विश्लेषण / ATTENDANCE & SICK LEAVE ANALYTICS</div>
+        <div className="data-grid grid-4" style={{ border: "2px solid #000000" }}>
+          <div className="data-item" style={{ textAlign: "center", border: "1px solid #000000" }}>
             <div className="data-value" style={{ fontSize: "20px" }}>{totalSessions}</div>
             <div className="data-label" style={{ margin: "5px 0 0 0" }}>एकूण सत्रे / Sessions</div>
           </div>
-          <div className="data-item" style={{ textAlign: "center" }}>
+          <div className="data-item" style={{ textAlign: "center", border: "1px solid #000000" }}>
             <div className="data-value" style={{ fontSize: "20px", color: "#059669" }}>{presentSessions}</div>
             <div className="data-label" style={{ margin: "5px 0 0 0" }}>हजर / Present</div>
           </div>
-          <div className="data-item" style={{ textAlign: "center" }}>
-            <div className="data-value" style={{ fontSize: "20px", color: "#dc2626" }}>{missedSessions}</div>
-            <div className="data-label" style={{ margin: "5px 0 0 0" }}>चुकले / Missed</div>
+          <div className="data-item" style={{ textAlign: "center", border: "1px solid #000000" }}>
+            <div className="data-value" style={{ fontSize: "20px", color: "#dc2626" }}>{missedSessions + leaveSessions}</div>
+            <div className="data-label" style={{ margin: "5px 0 0 0" }}>चुकले व रजा / Missed & Leave</div>
           </div>
-          <div className="data-item" style={{ textAlign: "center" }}>
+          <div className="data-item" style={{ textAlign: "center", border: "1px solid #000000" }}>
             <div className="data-value" style={{ fontSize: "20px" }}>{attendancePercentage}%</div>
-            <div className="data-label" style={{ margin: "5px 0 0 0" }}>प्रमाण / Rate</div>
+            <div className="data-label" style={{ margin: "5px 0 0 0" }}>हजेरी प्रमाण / Rate</div>
           </div>
         </div>
 
         {/* SICK PERIOD SUMMARY TABLE */}
-        <div style={{ marginTop: "25px", marginBottom: "8px", fontSize: "12px", fontWeight: "700", color: "var(--text-muted)", textTransform: "uppercase" }}>
+        <div style={{ marginTop: "22px", marginBottom: "6px", fontSize: "12px", fontWeight: "800", color: "#000000", textTransform: "uppercase", borderBottom: "1.5px solid #000000", paddingBottom: "3px" }}>
           आजारी कालावधी सारांश / SICK PERIOD(S) SUMMARY (या तारखेपासून ते या तारखेपर्यंत, एकूण दिवस, चुकवलेले PERIOD):
         </div>
-        <table className="clean-table" style={{ marginBottom: "20px" }}>
+        <table style={{ width: "100%", borderCollapse: "collapse", border: "2px solid #000000", marginBottom: "18px", fontSize: "11px" }}>
           <thead>
-            <tr>
-              <th style={{ width: "8%" }}>अ.क्र.</th>
-              <th style={{ width: "35%" }}>आजारी कालावधी / SICK PERIOD (या तारखेपासून ते या तारखेपर्यंत)</th>
-              <th style={{ width: "17%" }}>एकूण दिवस / DAYS</th>
-              <th style={{ width: "18%" }}>चुकवलेले PERIOD</th>
-              <th>आजारपण / गैरहजेरीचे कारण / REASON</th>
+            <tr style={{ backgroundColor: "#e2e8f0" }}>
+              <th style={{ width: "8%", border: "1px solid #000000", padding: "6px 8px", textAlign: "center" }}>अ.क्र.</th>
+              <th style={{ width: "36%", border: "1px solid #000000", padding: "6px 8px", textAlign: "left" }}>आजारी कालावधी (या तारखेपासून ते या तारखेपर्यंत)</th>
+              <th style={{ width: "18%", border: "1px solid #000000", padding: "6px 8px", textAlign: "center" }}>एकूण दिवस / DAYS</th>
+              <th style={{ width: "18%", border: "1px solid #000000", padding: "6px 8px", textAlign: "center" }}>चुकवलेले PERIOD</th>
+              <th style={{ border: "1px solid #000000", padding: "6px 8px", textAlign: "left" }}>आजारपण / रजेचे कारण</th>
             </tr>
           </thead>
           <tbody>
             {reportSickPeriods.length === 0 ? (
               <tr>
-                <td colSpan={5} style={{ textAlign: "center", fontStyle: "italic", color: "var(--text-muted)" }}>
+                <td colSpan={5} style={{ border: "1px solid #000000", padding: "10px", textAlign: "center", fontStyle: "italic", color: "#444444" }}>
                   कोणताही आजारी कालावधी नोंदवलेला नाही / No sick periods recorded.
                 </td>
               </tr>
             ) : (
               reportSickPeriods.map((sp, idx) => (
-                <tr key={idx}>
-                  <td>{idx + 1}</td>
-                  <td style={{ fontWeight: "bold" }}>
+                <tr key={idx} style={{ backgroundColor: idx % 2 === 1 ? "#f8fafc" : "#ffffff" }}>
+                  <td style={{ border: "1px solid #000000", padding: "6px 8px", textAlign: "center" }}>{idx + 1}</td>
+                  <td style={{ border: "1px solid #000000", padding: "6px 8px", fontWeight: "700" }}>
                     {sp.startDate.toLocaleDateString('en-GB')} ते {sp.endDate.toLocaleDateString('en-GB')}
                   </td>
-                  <td><strong>{sp.totalDays}</strong> दिवस / Days</td>
-                  <td><strong style={{ color: "#dc2626" }}>{sp.missedPeriods}</strong> Sessions</td>
-                  <td>{sp.reasons.length > 0 ? sp.reasons.join(", ") : "आजारी / Sick"}</td>
+                  <td style={{ border: "1px solid #000000", padding: "6px 8px", textAlign: "center", fontWeight: "700" }}>
+                    {sp.totalDays} दिवस (Days)
+                  </td>
+                  <td style={{ border: "1px solid #000000", padding: "6px 8px", textAlign: "center", fontWeight: "700", color: "#dc2626" }}>
+                    {sp.missedPeriods} Sessions (Period)
+                  </td>
+                  <td style={{ border: "1px solid #000000", padding: "6px 8px" }}>
+                    {sp.reasons.length > 0 ? sp.reasons.join(", ") : "आजारी रजा / Sick Leave"}
+                  </td>
                 </tr>
               ))
             )}
           </tbody>
         </table>
 
+        {/* REGISTERED LEAVES LOG (IF ANY) */}
+        {recruit.leaves && recruit.leaves.length > 0 && (
+          <div style={{ marginBottom: "18px" }}>
+            <div style={{ marginBottom: "6px", fontSize: "12px", fontWeight: "800", color: "#000000", textTransform: "uppercase", borderBottom: "1.5px solid #000000", paddingBottom: "3px" }}>
+              नोंदवलेली अधिकृत रजा नोंदवही / REGISTERED LEAVES LOG:
+            </div>
+            <table style={{ width: "100%", borderCollapse: "collapse", border: "2px solid #000000", fontSize: "11px" }}>
+              <thead>
+                <tr style={{ backgroundColor: "#e2e8f0" }}>
+                  <th style={{ width: "8%", border: "1px solid #000000", padding: "6px 8px", textAlign: "center" }}>अ.क्र.</th>
+                  <th style={{ width: "36%", border: "1px solid #000000", padding: "6px 8px", textAlign: "left" }}>रजा कालावधी (या तारखेपासून ते या तारखेपर्यंत)</th>
+                  <th style={{ width: "18%", border: "1px solid #000000", padding: "6px 8px", textAlign: "center" }}>एकूण दिवस / DAYS</th>
+                  <th style={{ border: "1px solid #000000", padding: "6px 8px", textAlign: "left" }}>रजेचे कारण व तपशील / REASON</th>
+                </tr>
+              </thead>
+              <tbody>
+                {recruit.leaves.map((lv, lIdx) => {
+                  const s = new Date(lv.startDate);
+                  const e = new Date(lv.endDate);
+                  const lDays = Math.round((e.getTime() - s.getTime()) / (1000 * 60 * 60 * 24)) + 1;
+                  return (
+                    <tr key={lv.id} style={{ backgroundColor: lIdx % 2 === 1 ? "#f8fafc" : "#ffffff" }}>
+                      <td style={{ border: "1px solid #000000", padding: "6px 8px", textAlign: "center" }}>{lIdx + 1}</td>
+                      <td style={{ border: "1px solid #000000", padding: "6px 8px", fontWeight: "700" }}>
+                        {s.toLocaleDateString('en-GB')} ते {e.toLocaleDateString('en-GB')}
+                      </td>
+                      <td style={{ border: "1px solid #000000", padding: "6px 8px", textAlign: "center", fontWeight: "700" }}>
+                        {lDays} दिवस (Days)
+                      </td>
+                      <td style={{ border: "1px solid #000000", padding: "6px 8px" }}>
+                        {lv.reason}
+                      </td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          </div>
+        )}
+
         {/* DATEWISE SESSIONS LOG */}
-        <div style={{ marginTop: "15px", marginBottom: "8px", fontSize: "12px", fontWeight: "700", color: "var(--text-muted)", textTransform: "uppercase" }}>
-          सर्व दिवसनिहाय चुकलेले सत्र तपशील / DATEWISE MISSED SESSIONS LOG:
+        <div style={{ marginTop: "16px", marginBottom: "6px", fontSize: "12px", fontWeight: "800", color: "#000000", textTransform: "uppercase", borderBottom: "1.5px solid #000000", paddingBottom: "3px" }}>
+          सर्व दिवसनिहाय चुकलेले सत्र व रजा तपशील / DATEWISE MISSED & SICK LEAVE SESSIONS LOG:
         </div>
-        <table className="clean-table">
+        <table style={{ width: "100%", borderCollapse: "collapse", border: "2px solid #000000", marginBottom: "20px", fontSize: "10.5px" }}>
           <thead>
-            <tr>
-              <th>दिनांक / Date</th>
-              <th>सत्र / Session</th>
-              <th>गैरहजेरीचे कारण / Reason</th>
+            <tr style={{ backgroundColor: "#e2e8f0" }}>
+              <th style={{ width: "6%", border: "1px solid #000000", padding: "6px 6px", textAlign: "center" }}>अ.क्र.</th>
+              <th style={{ width: "18%", border: "1px solid #000000", padding: "6px 8px", textAlign: "center" }}>दिनांक / Date</th>
+              <th style={{ width: "16%", border: "1px solid #000000", padding: "6px 8px", textAlign: "center" }}>वार / Day</th>
+              <th style={{ width: "18%", border: "1px solid #000000", padding: "6px 8px", textAlign: "center" }}>सत्र / Session</th>
+              <th style={{ width: "16%", border: "1px solid #000000", padding: "6px 8px", textAlign: "center" }}>प्रकार / Status</th>
+              <th style={{ border: "1px solid #000000", padding: "6px 8px", textAlign: "left" }}>कारण / Reason</th>
             </tr>
           </thead>
           <tbody>
-            {recruit.attendances.filter(a => a.morningStatus === "MISSED" || a.morningStatus === "ABSENT" || a.afternoonStatus === "MISSED" || a.afternoonStatus === "ABSENT").length === 0 ? (
+            {recruit.attendances.filter(a => 
+              a.morningStatus === "MISSED" || a.morningStatus === "ABSENT" || a.morningStatus === "LEAVE" ||
+              a.afternoonStatus === "MISSED" || a.afternoonStatus === "ABSENT" || a.afternoonStatus === "LEAVE"
+            ).length === 0 ? (
               <tr>
-                <td colSpan={3} style={{ textAlign: "center", fontStyle: "italic", color: "var(--text-muted)" }}>No absences recorded.</td>
+                <td colSpan={6} style={{ border: "1px solid #000000", padding: "10px", textAlign: "center", fontStyle: "italic", color: "#444444" }}>
+                  कोणतीही गैरहजेरी किंवा रजा नोंदवलेली नाही / No absences or leaves recorded.
+                </td>
               </tr>
             ) : (
               recruit.attendances.map(a => {
                 const rows = [];
-                const dateStr = new Date(a.date).toLocaleDateString('en-GB');
-                if (a.morningStatus === "MISSED" || a.morningStatus === "ABSENT") {
+                const d = new Date(a.date);
+                const dateStr = d.toLocaleDateString('en-GB');
+                const marathiDays = ["रविवार", "सोमवार", "मंगळवार", "बुधवार", "गुरुवार", "शुक्रवार", "शनिवार"];
+                const dayName = marathiDays[d.getUTCDay()];
+
+                if (a.morningStatus === "MISSED" || a.morningStatus === "ABSENT" || a.morningStatus === "LEAVE") {
+                  const statusLabel = a.morningStatus === "LEAVE" ? "आजारी रजा / Leave" : "चुकले / Missed";
                   rows.push(
-                    <tr key={`${a.id}-m`}>
-                      <td style={{ width: "20%" }}>{dateStr}</td>
-                      <td style={{ width: "20%" }}>Morning / सकाळ</td>
-                      <td>{a.morningReason || "Not specified"}</td>
+                    <tr key={`${a.id}-m`} style={{ backgroundColor: "#ffffff" }}>
+                      <td style={{ border: "1px solid #000000", padding: "5px 6px", textAlign: "center" }}>•</td>
+                      <td style={{ border: "1px solid #000000", padding: "5px 8px", textAlign: "center", fontWeight: "700" }}>{dateStr}</td>
+                      <td style={{ border: "1px solid #000000", padding: "5px 8px", textAlign: "center" }}>{dayName}</td>
+                      <td style={{ border: "1px solid #000000", padding: "5px 8px", textAlign: "center" }}>Morning / सकाळ सत्र</td>
+                      <td style={{ border: "1px solid #000000", padding: "5px 8px", textAlign: "center", fontWeight: "700" }}>{statusLabel}</td>
+                      <td style={{ border: "1px solid #000000", padding: "5px 8px" }}>{a.morningReason || "आजारी / Sick"}</td>
                     </tr>
                   );
                 }
-                if (a.afternoonStatus === "MISSED" || a.afternoonStatus === "ABSENT") {
+                if (a.afternoonStatus === "MISSED" || a.afternoonStatus === "ABSENT" || a.afternoonStatus === "LEAVE") {
+                  const statusLabel = a.afternoonStatus === "LEAVE" ? "आजारी रजा / Leave" : "चुकले / Missed";
                   rows.push(
-                    <tr key={`${a.id}-a`}>
-                      <td style={{ width: "20%" }}>{dateStr}</td>
-                      <td style={{ width: "20%" }}>Afternoon / दुपार</td>
-                      <td>{a.afternoonReason || "Not specified"}</td>
+                    <tr key={`${a.id}-a`} style={{ backgroundColor: "#fafafa" }}>
+                      <td style={{ border: "1px solid #000000", padding: "5px 6px", textAlign: "center" }}>•</td>
+                      <td style={{ border: "1px solid #000000", padding: "5px 8px", textAlign: "center", fontWeight: "700" }}>{dateStr}</td>
+                      <td style={{ border: "1px solid #000000", padding: "5px 8px", textAlign: "center" }}>{dayName}</td>
+                      <td style={{ border: "1px solid #000000", padding: "5px 8px", textAlign: "center" }}>Afternoon / दुपार सत्र</td>
+                      <td style={{ border: "1px solid #000000", padding: "5px 8px", textAlign: "center", fontWeight: "700" }}>{statusLabel}</td>
+                      <td style={{ border: "1px solid #000000", padding: "5px 8px" }}>{a.afternoonReason || "आजारी / Sick"}</td>
                     </tr>
                   );
                 }
