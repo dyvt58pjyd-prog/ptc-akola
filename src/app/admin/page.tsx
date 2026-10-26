@@ -5,6 +5,8 @@ import InteractiveRoster from "./InteractiveRoster";
 import RecentActivityFeed from "./RecentActivityFeed";
 import BackupManager from "@/components/BackupManager";
 
+export const dynamic = "force-dynamic";
+
 export default async function AdminDashboard() {
   // Fetch recruits for roster
   const recruits = await prisma.recruit.findMany({

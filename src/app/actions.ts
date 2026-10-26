@@ -49,12 +49,9 @@ export async function registerRecruit(formData: FormData) {
       dateOfEntry: data.dateOfEntry ? new Date(data.dateOfEntry as string) : null,
     };
 
-    // Upsert logic: search by chestNumber
-    // Note: If multiple batches have the same chestNumber, this might conflict.
-    // In this app structure, we assume chestNumber is unique across current active recruits, 
-    // or they provide batchId during registration if necessary.
+    // Upsert logic: search by chestNumber (and batchId if provided)
     const existingRecruit = await prisma.recruit.findFirst({
-      where: { chestNumber: chestNumber }
+      where: data.batchId ? { chestNumber, batchId: data.batchId as string } : { chestNumber }
     });
 
     let recruit;
@@ -69,7 +66,20 @@ export async function registerRecruit(formData: FormData) {
       });
     }
     
+    // Comprehensive cache revalidation for Vercel production
+    revalidatePath("/", "layout");
     revalidatePath("/admin");
+    revalidatePath("/directory");
+    revalidatePath("/officer");
+    revalidatePath("/officer/attendance");
+    revalidatePath("/officer/evaluate");
+    revalidatePath("/attendance-viewer");
+    revalidatePath("/summary");
+    revalidatePath("/admin/batches");
+    if (recruit.id) {
+      revalidatePath(`/directory/${recruit.id}`);
+      revalidatePath(`/directory/${recruit.id}/report`);
+    }
     return { success: true, recruitId: recruit.id };
   } catch (error) {
     console.error("Failed to register recruit:", error);

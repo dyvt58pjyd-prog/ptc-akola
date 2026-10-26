@@ -2,6 +2,8 @@ import { prisma } from "@/lib/prisma";
 import EvaluateClient from "./EvaluateClient";
 import { getSession } from "@/lib/auth";
 
+export const dynamic = "force-dynamic";
+
 export default async function EvaluatePage(props: {
   searchParams: Promise<{ squad?: string }>
 }) {
@@ -15,11 +17,11 @@ export default async function EvaluatePage(props: {
   });
 
   // Filter recruits based on officer's assigned jurisdiction
-  if (officer?.minChestNumber !== null && officer?.maxChestNumber !== null) {
+  if (officer && officer.minChestNumber !== null && officer.maxChestNumber !== null) {
     recruits = recruits.filter(r => {
       const chestNoInt = parseInt(r.chestNumber.replace(/\D/g, ''));
       if (isNaN(chestNoInt)) return false;
-      return chestNoInt >= officer!.minChestNumber! && chestNoInt <= officer!.maxChestNumber!;
+      return chestNoInt >= officer.minChestNumber! && chestNoInt <= officer.maxChestNumber!;
     });
   }
 

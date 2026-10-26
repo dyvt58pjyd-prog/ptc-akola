@@ -7,6 +7,8 @@ import RecentActivityFeed from "../admin/RecentActivityFeed";
 import BackupManager from "@/components/BackupManager";
 import { getSession } from "@/lib/auth";
 
+export const dynamic = "force-dynamic";
+
 export default async function OfficerDashboard() {
   const session = await getSession();
   const officerUser = session ? await prisma.user.findUnique({ where: { id: session.userId } }) : null;

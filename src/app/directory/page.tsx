@@ -4,6 +4,8 @@ import { getSession } from "@/lib/auth";
 import { redirect } from "next/navigation";
 import { Search } from "lucide-react";
 
+export const dynamic = "force-dynamic";
+
 export default async function DirectoryPage() {
   const session = await getSession();
   if (!session) redirect("/");
@@ -18,7 +20,7 @@ export default async function DirectoryPage() {
       orderBy: { chestNumber: "asc" }
     });
     recruits = allRecruits.filter(r => {
-      const num = parseInt(r.chestNumber.replace(/\\D/g, ''));
+      const num = parseInt(r.chestNumber.replace(/\D/g, ''));
       return !isNaN(num) && num >= user.minChestNumber! && num <= user.maxChestNumber!;
     });
   } else {

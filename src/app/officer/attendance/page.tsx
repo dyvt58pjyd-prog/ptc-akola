@@ -3,6 +3,8 @@ import { getSession } from "@/lib/auth";
 import { redirect } from "next/navigation";
 import AttendanceClient from "./AttendanceClient";
 
+export const dynamic = "force-dynamic";
+
 export default async function AttendancePage() {
   const session = await getSession();
   if (!session || session.role !== "OFFICER") {
@@ -20,7 +22,7 @@ export default async function AttendancePage() {
       orderBy: { chestNumber: "asc" }
     });
     recruits = allRecruits.filter(r => {
-      const num = parseInt(r.chestNumber.replace(/\\D/g, ''));
+      const num = parseInt(r.chestNumber.replace(/\D/g, ''));
       return !isNaN(num) && num >= officer.minChestNumber! && num <= officer.maxChestNumber!;
     });
   } else {
