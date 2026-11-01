@@ -4,6 +4,7 @@ import { useState, useRef, useCallback } from "react";
 import Webcam from "react-webcam";
 import { Camera, Upload, Save, CheckCircle } from "lucide-react";
 import { registerRecruit } from "@/app/actions";
+import { compressImage } from "@/lib/imageCompression";
 
 export default function BilingualRegisterForm({ batches = [] }: { batches?: any[] }) {
   const webcamRef = useRef<Webcam>(null);
@@ -13,22 +14,33 @@ export default function BilingualRegisterForm({ batches = [] }: { batches?: any[
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState(false);
 
-  const capture = useCallback(() => {
+  const capture = useCallback(async () => {
     const imageSrc = webcamRef.current?.getScreenshot();
     if (imageSrc) {
-      setPhoto(imageSrc);
+      try {
+        const compressed = await compressImage(imageSrc);
+        setPhoto(compressed);
+      } catch {
+        setPhoto(imageSrc);
+      }
       setUseCamera(false);
     }
   }, [webcamRef]);
 
-  const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
-      const reader = new FileReader();
-      reader.onloadend = () => {
-        setPhoto(reader.result as string);
-      };
-      reader.readAsDataURL(file);
+      try {
+        const compressed = await compressImage(file);
+        setPhoto(compressed);
+      } catch (err) {
+        console.error("Compression fallback:", err);
+        const reader = new FileReader();
+        reader.onloadend = () => {
+          setPhoto(reader.result as string);
+        };
+        reader.readAsDataURL(file);
+      }
     }
   };
 
@@ -37,23 +49,37 @@ export default function BilingualRegisterForm({ batches = [] }: { batches?: any[
     setLoading(true);
     setError(null);
 
-    const formData = new FormData(e.currentTarget);
-    if (!photo) {
-      setError("Passport Photo is compulsory. Please take a photo or upload one. / पासपोर्ट फोटो अनिवार्य आहे.");
-      setLoading(false);
-      return;
-    }
-    
-    formData.append("photoUrl", photo);
+    try {
+      if (!photo) {
+        setError("Passport Photo is compulsory. Please take a photo or upload one. / पासपोर्ट फोटो अनिवार्य आहे.");
+        setLoading(false);
+        return;
+      }
+      
+      // Ensure photo is safely compressed before sending
+      let photoToSend = photo;
+      try {
+        photoToSend = await compressImage(photo);
+      } catch (compErr) {
+        console.warn("Pre-submit compression warning:", compErr);
+      }
 
-    const result = await registerRecruit(formData);
-    
-    if (result.success) {
-      setSuccess(true);
-    } else {
-      setError(result.error || "नोंदणी अयशस्वी. / Registration failed.");
+      const formData = new FormData(e.currentTarget);
+      formData.set("photoUrl", photoToSend);
+
+      const result = await registerRecruit(formData);
+      
+      if (result.success) {
+        setSuccess(true);
+      } else {
+        setError(result.error || "नोंदणी अयशस्वी. / Registration failed.");
+      }
+    } catch (err: any) {
+      console.error("Failed to register recruit:", err);
+      setError(err?.message || "सर्व्हर किंवा नेटवर्क त्रुटी आली. कृपया पुन्हा प्रयत्न करा. / A network or server error occurred. Please try again.");
+    } finally {
+      setLoading(false);
     }
-    setLoading(false);
   };
 
   const handleReset = () => {

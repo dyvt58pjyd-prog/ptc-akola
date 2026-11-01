@@ -5,6 +5,7 @@ import Webcam from "react-webcam";
 import { Camera, Upload, Save } from "lucide-react";
 import { registerRecruit } from "@/app/actions";
 import { useRouter } from "next/navigation";
+import { compressImage } from "@/lib/imageCompression";
 
 export default function RegisterForm({ redirectUrl }: { redirectUrl: string }) {
   const router = useRouter();
@@ -14,22 +15,33 @@ export default function RegisterForm({ redirectUrl }: { redirectUrl: string }) {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  const capture = useCallback(() => {
+  const capture = useCallback(async () => {
     const imageSrc = webcamRef.current?.getScreenshot();
     if (imageSrc) {
-      setPhoto(imageSrc);
+      try {
+        const compressed = await compressImage(imageSrc);
+        setPhoto(compressed);
+      } catch {
+        setPhoto(imageSrc);
+      }
       setUseCamera(false);
     }
   }, [webcamRef]);
 
-  const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
-      const reader = new FileReader();
-      reader.onloadend = () => {
-        setPhoto(reader.result as string);
-      };
-      reader.readAsDataURL(file);
+      try {
+        const compressed = await compressImage(file);
+        setPhoto(compressed);
+      } catch (err) {
+        console.error("Compression fallback:", err);
+        const reader = new FileReader();
+        reader.onloadend = () => {
+          setPhoto(reader.result as string);
+        };
+        reader.readAsDataURL(file);
+      }
     }
   };
 
@@ -38,17 +50,33 @@ export default function RegisterForm({ redirectUrl }: { redirectUrl: string }) {
     setLoading(true);
     setError(null);
 
-    const formData = new FormData(e.currentTarget);
-    if (photo) {
-      formData.append("photoUrl", photo);
-    }
+    try {
+      const formData = new FormData(e.currentTarget);
+      if (photo) {
+        let photoToSend = photo;
+        try {
+          photoToSend = await compressImage(photo);
+        } catch (compErr) {
+          console.warn("Pre-submit compression warning:", compErr);
+        }
+        formData.append("photoUrl", photoToSend);
+      } else {
+        setError("Passport Photo is required.");
+        setLoading(false);
+        return;
+      }
 
-    const result = await registerRecruit(formData);
-    
-    if (result.success) {
-      router.push(redirectUrl);
-    } else {
-      setError(result.error || "Failed to register recruit.");
+      const result = await registerRecruit(formData);
+      
+      if (result.success) {
+        router.push(redirectUrl);
+      } else {
+        setError(result.error || "Failed to register recruit.");
+      }
+    } catch (err: any) {
+      console.error("Error submitting recruit:", err);
+      setError(err?.message || "A network or server error occurred. Please try again.");
+    } finally {
       setLoading(false);
     }
   };

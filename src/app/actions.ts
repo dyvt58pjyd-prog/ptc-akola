@@ -10,48 +10,60 @@ function toUpperCaseHelper(str: string | undefined | null): string | null {
   return str.toUpperCase();
 }
 
+function parseOptionalDate(val: any): Date | null {
+  if (!val || typeof val !== "string" || val.trim() === "") return null;
+  const d = new Date(val);
+  return isNaN(d.getTime()) ? null : d;
+}
+
 export async function registerRecruit(formData: FormData) {
   const data = Object.fromEntries(formData.entries());
   
   try {
-    // Strip leading zeros from chest number, e.g. "01" -> "1"
-    const chestNumber = (data.chestNumber as string).replace(/^0+(?=\d)/, '');
+    // Strip leading zeros and trim chest number, e.g. "01" -> "1"
+    const rawChest = String(data.chestNumber || "").trim();
+    const chestNumber = rawChest.replace(/^0+(?=\d)/, '');
+    if (!chestNumber) {
+      return { success: false, error: "Chest number is required. / छाती क्रमांक अनिवार्य आहे." };
+    }
     if (!data.photoUrl) {
-      return { success: false, error: "Photo is required." };
+      return { success: false, error: "Passport Photo is required. / फोटो अनिवार्य आहे." };
     }
 
+    const batchId = data.batchId && String(data.batchId).trim() !== "" ? String(data.batchId).trim() : null;
+
     const recruitData = {
-      name: toUpperCaseHelper(data.name as string) as string,
-      age: parseInt(data.age as string),
+      name: toUpperCaseHelper(String(data.name || "").trim()) as string,
+      age: parseInt(data.age as string) || 0,
       chestNumber: chestNumber,
-      unit: toUpperCaseHelper(data.unit as string) as string,
-      squadNumber: data.squadNumber ? toUpperCaseHelper((data.squadNumber as string).replace(/\D/g, '').replace(/^0+(?=\d)/, '')) : null,
-      homeDistrict: data.homeDistrict as string,
-      mobile: data.mobile as string,
-      whatsappNumber: data.whatsappNumber ? (data.whatsappNumber as string) : null,
-      maritalStatus: data.maritalStatus as string,
-      education: toUpperCaseHelper(data.education as string) as string,
-      height: parseFloat(data.height as string),
-      weight: parseFloat(data.weight as string),
-      bloodGroup: data.bloodGroup ? (data.bloodGroup as string) : null,
-      sex: data.sex as string,
-      religion: data.religion ? (data.religion as string) : null,
-      caste: toUpperCaseHelper(data.caste as string),
-      category: data.category ? (data.category as string) : null,
-      address: toUpperCaseHelper(data.address as string),
-      taluka: toUpperCaseHelper(data.taluka as string),
-      pincode: data.pincode as string,
-      appointmentCategory: data.appointmentCategory ? (data.appointmentCategory as string) : null,
-      appointmentType: data.appointmentType ? (data.appointmentType as string) : null,
-      batchId: data.batchId ? (data.batchId as string) : null,
+      unit: toUpperCaseHelper(String(data.unit || "").trim()) as string,
+      squadNumber: data.squadNumber ? toUpperCaseHelper(String(data.squadNumber).replace(/\D/g, '').replace(/^0+(?=\d)/, '')) : null,
+      homeDistrict: String(data.homeDistrict || "").trim(),
+      mobile: String(data.mobile || "").trim(),
+      whatsappNumber: data.whatsappNumber ? String(data.whatsappNumber).trim() : null,
+      maritalStatus: String(data.maritalStatus || "").trim(),
+      education: toUpperCaseHelper(String(data.education || "").trim()) as string,
+      height: parseFloat(data.height as string) || 0,
+      weight: parseFloat(data.weight as string) || 0,
+      bloodGroup: data.bloodGroup ? String(data.bloodGroup).trim() : null,
+      sex: String(data.sex || "").trim(),
+      religion: data.religion ? String(data.religion).trim() : null,
+      caste: toUpperCaseHelper(String(data.caste || "").trim()),
+      category: data.category ? String(data.category).trim() : null,
+      address: toUpperCaseHelper(String(data.address || "").trim()),
+      taluka: toUpperCaseHelper(String(data.taluka || "").trim()),
+      pincode: data.pincode ? String(data.pincode).trim() : null,
+      appointmentCategory: data.appointmentCategory ? String(data.appointmentCategory).trim() : null,
+      appointmentType: data.appointmentType ? String(data.appointmentType).trim() : null,
+      batchId: batchId,
       photoUrl: data.photoUrl as string,
-      nearestPoliceStation: data.nearestPoliceStation ? toUpperCaseHelper(data.nearestPoliceStation as string) : null,
-      dateOfEntry: data.dateOfEntry ? new Date(data.dateOfEntry as string) : null,
+      nearestPoliceStation: data.nearestPoliceStation ? toUpperCaseHelper(String(data.nearestPoliceStation).trim()) : null,
+      dateOfEntry: parseOptionalDate(data.dateOfEntry),
     };
 
     // Upsert logic: search by chestNumber (and batchId if provided)
     const existingRecruit = await prisma.recruit.findFirst({
-      where: data.batchId ? { chestNumber, batchId: data.batchId as string } : { chestNumber }
+      where: batchId ? { chestNumber, batchId } : { chestNumber }
     });
 
     let recruit;
@@ -66,10 +78,9 @@ export async function registerRecruit(formData: FormData) {
       });
     }
     
-    // Comprehensive cache revalidation for Vercel production
-    revalidatePath("/", "layout");
-    revalidatePath("/admin");
+    // Targeted cache revalidation
     revalidatePath("/directory");
+    revalidatePath("/admin");
     revalidatePath("/officer");
     revalidatePath("/officer/attendance");
     revalidatePath("/officer/evaluate");
@@ -79,18 +90,17 @@ export async function registerRecruit(formData: FormData) {
     if (recruit.id) {
       revalidatePath(`/directory/${recruit.id}`);
       revalidatePath(`/directory/${recruit.id}/report`);
+      revalidatePath(`/directory/${recruit.id}/edit`);
     }
     return { success: true, recruitId: recruit.id };
-  } catch (error) {
+  } catch (error: any) {
     console.error("Failed to register recruit:", error);
-    return { success: false, error: "Failed to register recruit. This chest number may already be taken in this batch." };
+    const msg = error?.message || "";
+    if (msg.includes("Unique constraint") || msg.includes("unique")) {
+      return { success: false, error: "या बॅचमध्ये हा छाती क्रमांक आधीच नोंदवला गेला आहे. / This chest number is already registered in this batch." };
+    }
+    return { success: false, error: `नोंदणी अयशस्वी: ${msg || "सर्व्हर त्रुटी"} / Registration failed.` };
   }
-}
-
-function parseOptionalDate(val: any): Date | null {
-  if (!val || typeof val !== "string" || val.trim() === "") return null;
-  const d = new Date(val);
-  return isNaN(d.getTime()) ? null : d;
 }
 
 export async function submitEvaluation(formData: FormData) {
@@ -310,7 +320,11 @@ export async function deleteRecruit(recruitId: string) {
       prisma.recruit.delete({ where: { id: recruitId } }),
     ]);
 
-    revalidatePath("/", "layout");
+    revalidatePath("/directory");
+    revalidatePath("/admin");
+    revalidatePath("/officer");
+    revalidatePath("/summary");
+    revalidatePath("/attendance-viewer");
     return { success: true };
   } catch (error) {
     console.error("Failed to delete recruit:", error);
@@ -327,43 +341,56 @@ export async function updateRecruit(recruitId: string, formData: FormData) {
       return { success: false, error: "Unauthorized" };
     }
 
+    const rawChest = String(data.chestNumber || "").trim();
+    const chestNumber = rawChest.replace(/^0+(?=\d)/, '');
+    const batchId = data.batchId && String(data.batchId).trim() !== "" ? String(data.batchId).trim() : null;
+
     const recruit = await prisma.recruit.update({
       where: { id: recruitId },
       data: {
-        name: toUpperCaseHelper(data.name as string) as string,
-        age: parseInt(data.age as string),
-        chestNumber: data.chestNumber as string,
-        unit: toUpperCaseHelper(data.unit as string) as string,
-        squadNumber: data.squadNumber ? toUpperCaseHelper((data.squadNumber as string).replace(/\D/g, '').replace(/^0+(?=\d)/, '')) : null,
-        homeDistrict: data.homeDistrict as string,
-        mobile: data.mobile as string,
-        whatsappNumber: data.whatsappNumber ? (data.whatsappNumber as string) : null,
-        maritalStatus: data.maritalStatus as string,
-        education: toUpperCaseHelper(data.education as string) as string,
-        height: parseFloat(data.height as string),
-        weight: parseFloat(data.weight as string),
-        bloodGroup: data.bloodGroup ? (data.bloodGroup as string) : null,
-        sex: data.sex as string,
-        religion: data.religion ? (data.religion as string) : null,
-        caste: toUpperCaseHelper(data.caste as string),
-        category: data.category ? (data.category as string) : null,
-        address: toUpperCaseHelper(data.address as string),
-        taluka: toUpperCaseHelper(data.taluka as string),
-        pincode: data.pincode as string,
-        appointmentCategory: data.appointmentCategory ? (data.appointmentCategory as string) : null,
-        appointmentType: data.appointmentType ? (data.appointmentType as string) : null,
-        batchId: data.batchId ? (data.batchId as string) : null,
+        name: toUpperCaseHelper(String(data.name || "").trim()) as string,
+        age: parseInt(data.age as string) || 0,
+        chestNumber: chestNumber,
+        unit: toUpperCaseHelper(String(data.unit || "").trim()) as string,
+        squadNumber: data.squadNumber ? toUpperCaseHelper(String(data.squadNumber).replace(/\D/g, '').replace(/^0+(?=\d)/, '')) : null,
+        homeDistrict: String(data.homeDistrict || "").trim(),
+        mobile: String(data.mobile || "").trim(),
+        whatsappNumber: data.whatsappNumber ? String(data.whatsappNumber).trim() : null,
+        maritalStatus: String(data.maritalStatus || "").trim(),
+        education: toUpperCaseHelper(String(data.education || "").trim()) as string,
+        height: parseFloat(data.height as string) || 0,
+        weight: parseFloat(data.weight as string) || 0,
+        bloodGroup: data.bloodGroup ? String(data.bloodGroup).trim() : null,
+        sex: String(data.sex || "").trim(),
+        religion: data.religion ? String(data.religion).trim() : null,
+        caste: toUpperCaseHelper(String(data.caste || "").trim()),
+        category: data.category ? String(data.category).trim() : null,
+        address: toUpperCaseHelper(String(data.address || "").trim()),
+        taluka: toUpperCaseHelper(String(data.taluka || "").trim()),
+        pincode: data.pincode ? String(data.pincode).trim() : null,
+        appointmentCategory: data.appointmentCategory ? String(data.appointmentCategory).trim() : null,
+        appointmentType: data.appointmentType ? String(data.appointmentType).trim() : null,
+        batchId: batchId,
         photoUrl: data.photoUrl ? (data.photoUrl as string) : undefined, // only update if provided
-        nearestPoliceStation: data.nearestPoliceStation ? toUpperCaseHelper(data.nearestPoliceStation as string) : null,
-        dateOfEntry: data.dateOfEntry ? new Date(data.dateOfEntry as string) : null,
+        nearestPoliceStation: data.nearestPoliceStation ? toUpperCaseHelper(String(data.nearestPoliceStation).trim()) : null,
+        dateOfEntry: parseOptionalDate(data.dateOfEntry),
       }
     });
     
-    revalidatePath("/", "layout");
+    revalidatePath("/directory");
+    revalidatePath("/admin");
+    revalidatePath("/officer");
+    revalidatePath(`/directory/${recruit.id}`);
+    revalidatePath(`/directory/${recruit.id}/report`);
+    revalidatePath(`/directory/${recruit.id}/edit`);
     return { success: true, recruitId: recruit.id };
-  } catch (error) {
+  } catch (error: any) {
     console.error("Failed to update recruit:", error);
-    return { success: false, error: "Failed to update recruit. Check if chest number already exists in this batch." };
+    const msg = error?.message || "";
+    if (msg.includes("Unique constraint") || msg.includes("unique")) {
+      return { success: false, error: "हा छाती क्रमांक या बॅचमध्ये आधीच अस्तित्वात आहे. / This chest number already exists in this batch." };
+    }
+    return { success: false, error: `अपडेट अयशस्वी: ${msg || "त्रुटी आली"} / Failed to update recruit.` };
   }
 }
 

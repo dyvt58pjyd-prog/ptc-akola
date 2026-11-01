@@ -6,6 +6,7 @@ import { Camera, Upload, Save, CheckCircle, ArrowLeft } from "lucide-react";
 import { updateRecruit } from "@/app/actions";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
+import { compressImage } from "@/lib/imageCompression";
 
 export default function EditRecruitClient({ recruit, batches = [] }: { recruit: any, batches?: any[] }) {
   const webcamRef = useRef<Webcam>(null);
@@ -16,22 +17,33 @@ export default function EditRecruitClient({ recruit, batches = [] }: { recruit: 
   const [success, setSuccess] = useState(false);
   const router = useRouter();
 
-  const capture = useCallback(() => {
+  const capture = useCallback(async () => {
     const imageSrc = webcamRef.current?.getScreenshot();
     if (imageSrc) {
-      setPhoto(imageSrc);
+      try {
+        const compressed = await compressImage(imageSrc);
+        setPhoto(compressed);
+      } catch {
+        setPhoto(imageSrc);
+      }
       setUseCamera(false);
     }
   }, [webcamRef]);
 
-  const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
-      const reader = new FileReader();
-      reader.onloadend = () => {
-        setPhoto(reader.result as string);
-      };
-      reader.readAsDataURL(file);
+      try {
+        const compressed = await compressImage(file);
+        setPhoto(compressed);
+      } catch (err) {
+        console.error("Compression fallback:", err);
+        const reader = new FileReader();
+        reader.onloadend = () => {
+          setPhoto(reader.result as string);
+        };
+        reader.readAsDataURL(file);
+      }
     }
   };
 
@@ -40,23 +52,35 @@ export default function EditRecruitClient({ recruit, batches = [] }: { recruit: 
     setLoading(true);
     setError(null);
 
-    const formData = new FormData(e.currentTarget);
-    // Only append if it's a NEW photo (data URL)
-    if (photo && photo.startsWith("data:image")) {
-      formData.append("photoUrl", photo);
-    } else if (recruit.photoUrl && photo === recruit.photoUrl) {
-      // Retain existing
-      formData.append("photoUrl", recruit.photoUrl);
-    }
+    try {
+      const formData = new FormData(e.currentTarget);
+      // Only append if it's a NEW photo (data URL)
+      if (photo && photo.startsWith("data:image")) {
+        let photoToSend = photo;
+        try {
+          photoToSend = await compressImage(photo);
+        } catch (compErr) {
+          console.warn("Pre-submit compression warning:", compErr);
+        }
+        formData.append("photoUrl", photoToSend);
+      } else if (recruit.photoUrl && photo === recruit.photoUrl) {
+        // Retain existing
+        formData.append("photoUrl", recruit.photoUrl);
+      }
 
-    const result = await updateRecruit(recruit.id, formData);
-    
-    if (result.success) {
-      setSuccess(true);
-    } else {
-      setError(result.error || "अपडेट अयशस्वी. / Update failed.");
+      const result = await updateRecruit(recruit.id, formData);
+      
+      if (result.success) {
+        setSuccess(true);
+      } else {
+        setError(result.error || "अपडेट अयशस्वी. / Update failed.");
+      }
+    } catch (err: any) {
+      console.error("Failed to update recruit:", err);
+      setError(err?.message || "सर्व्हर किंवा नेटवर्क त्रुटी आली. कृपया पुन्हा प्रयत्न करा. / A network or server error occurred. Please try again.");
+    } finally {
+      setLoading(false);
     }
-    setLoading(false);
   };
 
   if (success) {
