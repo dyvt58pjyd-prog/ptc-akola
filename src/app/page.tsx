@@ -35,7 +35,7 @@ export default function Home() {
       <div className="glass-card" style={{ maxWidth: "400px", width: "100%" }}>
         <div style={{ textAlign: "center", marginBottom: "2rem" }}>
           <img 
-            src="http://www.ptcnanveej-daund.in/wp-content/uploads/2021/07/logo.png" 
+            src="/logo.png" 
             alt="PTC Logo" 
             style={{ width: "100px", height: "auto", margin: "0 auto 1rem", display: "block" }} 
           />

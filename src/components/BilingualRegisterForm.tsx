@@ -107,7 +107,7 @@ export default function BilingualRegisterForm({ batches = [] }: { batches?: any[
     <div style={{ maxWidth: "800px", margin: "0 auto" }}>
       <div style={{ textAlign: "center", marginBottom: "2rem" }}>
         <img 
-          src="http://www.ptcnanveej-daund.in/wp-content/uploads/2021/07/logo.png" 
+          src="/logo.png" 
           alt="PTC Logo" 
           style={{ width: "120px", height: "auto", margin: "0 auto 1rem", display: "block" }} 
         />
