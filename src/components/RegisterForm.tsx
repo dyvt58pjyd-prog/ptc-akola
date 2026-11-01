@@ -47,11 +47,12 @@ export default function RegisterForm({ redirectUrl }: { redirectUrl: string }) {
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
+    // Synchronously construct FormData before any await
+    const formData = new FormData(e.currentTarget);
     setLoading(true);
     setError(null);
 
     try {
-      const formData = new FormData(e.currentTarget);
       if (photo) {
         let photoToSend = photo;
         try {

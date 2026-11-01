@@ -49,11 +49,12 @@ export default function EditRecruitClient({ recruit, batches = [] }: { recruit: 
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
+    // Synchronously construct FormData before any await
+    const formData = new FormData(e.currentTarget);
     setLoading(true);
     setError(null);
 
     try {
-      const formData = new FormData(e.currentTarget);
       // Only append if it's a NEW photo (data URL)
       if (photo && photo.startsWith("data:image")) {
         let photoToSend = photo;

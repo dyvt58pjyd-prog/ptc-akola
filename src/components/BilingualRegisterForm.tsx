@@ -46,6 +46,8 @@ export default function BilingualRegisterForm({ batches = [] }: { batches?: any[
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
+    // Synchronously construct FormData before any await (React recycles e.currentTarget after async ticks)
+    const formData = new FormData(e.currentTarget);
     setLoading(true);
     setError(null);
 
@@ -64,7 +66,6 @@ export default function BilingualRegisterForm({ batches = [] }: { batches?: any[
         console.warn("Pre-submit compression warning:", compErr);
       }
 
-      const formData = new FormData(e.currentTarget);
       formData.set("photoUrl", photoToSend);
 
       const result = await registerRecruit(formData);
